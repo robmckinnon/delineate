@@ -19,11 +19,15 @@
  */
 package net.sf.delineate.gui;
 
+import net.sf.delineate.command.Command;
+import net.sf.delineate.utility.XPathTool;
 import org.xml.sax.SAXException;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -39,13 +43,13 @@ import javax.xml.transform.TransformerException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-
-import net.sf.delineate.command.Command;
-import net.sf.delineate.utility.XPathTool;
+import java.util.HashMap;
 
 /**
  * @author robmckinnon@users.sourceforge.net
@@ -69,6 +73,7 @@ public class SettingsPanel {
             }
         }
     };
+    private HashMap fileTextFieldMap = new HashMap(5);
 
 
     public SettingsPanel(String parameterFile) throws Exception {
@@ -183,6 +188,7 @@ public class SettingsPanel {
         if(value.length() > 0) {
             JTextField textField = new JTextField(value);
             textField.setName(name);
+            textField.setColumns(15);
 
             textField.addKeyListener(new KeyAdapter() {
                 public void keyReleased(KeyEvent e) {
@@ -191,6 +197,9 @@ public class SettingsPanel {
                 }
             });
 
+            if(name.endsWith("file")) {
+                fileTextFieldMap.put(name, textField);
+            }
             return textField;
         } else {
             return new JLabel("");
@@ -223,7 +232,9 @@ public class SettingsPanel {
         return spinnerSlider;
     }
 
-    private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, String name) {
+    private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, final String name) {
+        boolean isFileParameter = name.endsWith("file");
+
         JLabel label = new JLabel(name.replace('-', ' '));
         label.setToolTipText(desc);
 
@@ -244,6 +255,25 @@ public class SettingsPanel {
                 });
             }
             panel.add(checkBox, BorderLayout.EAST);
+        } else if(isFileParameter) {
+            final JFileChooser fileChooser = new JFileChooser();
+
+            JButton button = new JButton("browse");
+            button.setToolTipText("Browse files");
+            button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    int response = fileChooser.showOpenDialog((JComponent)e.getSource());
+
+                    if(response == JFileChooser.APPROVE_OPTION) {
+                        File file = fileChooser.getSelectedFile();
+                        JTextField textField = (JTextField)fileTextFieldMap.get(name);
+                        textField.setText(file.getPath());
+                        command.setParameterValue(textField.getName(), textField.getText());
+                    }
+                }
+            });
+
+            panel.add(button, BorderLayout.EAST);
         }
 
         return panel;
