@@ -1,9 +1,9 @@
 
-   D E L I N E A T E - R A S T E R    T 0    S V G    C O N V E R T E R
+D E L I N E A T E   -   R A S T E R    T 0    S V G    C O N V E R T E R
 
 
-Installing - GNU/Linux (& Mac OS X)
------------------------------------
+Installing - GNU/Linux & Mac OS X
+---------------------------------
 
 1) You will need to install AutoTrace on your machine.
    Downloads and installation instructions can be found at:
@@ -15,21 +15,19 @@ Installing - GNU/Linux (& Mac OS X)
 
    http://java.sun.com/
 
+   
+3) Set your JAVA_HOME variable to the location where you have Java
+   installed.
 
-3) Set your JAVA_HOME variable to the location where you have Java installed.
 
-
-4) Extract delineate-0.2.tar.gz on to your machine
+4) Extract delineate-0.3.tar.gz on to your machine
 
 
 5) To run:
 
-   cd delineate/0.2
-
+   cd delineate/0.3
    chmod a+x delineate.sh
-
    ./delineate.sh
-
 
 
 Installing - Windows
@@ -42,12 +40,14 @@ Installing - Windows
 
 
 2) Put the AutoTrace install directory on to your system Path.
-
+   
    In Windows XP you can change the path by going to:
 
-   Start ->Settings ->Control Panel ->System ->Advanced ->Environment Variables
+   Start ->Settings ->Control Panel ->System ->Advanced ->
+   Environment Variables
 
-   Edit the Path variable, and append the AutoTrace install directory on to the end.
+   Edit the Path variable, and append the AutoTrace install directory
+   on to the end of the Path.
 
 
 3) You will also need to have Java 1.4.1 or Java 1.4.2 installed:
@@ -55,19 +55,27 @@ Installing - Windows
    http://java.sun.com/
 
 
-4) Set your JAVA_HOME environment variable to the location where you have Java installed.
-
+4) Set your JAVA_HOME environment variable to the location where you
+   have Java installed.
+   
    In Windows XP you can add this environment variable by going to:
 
-   Start ->Settings ->Control Panel ->System ->Advanced ->Environment Variables
+   Start ->Settings ->Control Panel ->System ->Advanced ->
+   Environment Variables
+   
+   Click the New button:
+   - enter the variable name as JAVA_HOME, and
+   - enter the variable value as the location where Java is installed.
+   
+   For example:
+     Variable name: JAVA_HOME
+     Variable value: C:\Program Files\J2SDK_1.4.1_02
 
 
-5) Extract delineate-0.2.zip on to your machine
+5) Extract delineate-0.3.zip on to your machine
 
 
 6) To run:
 
-   Go to the directory <install dir>/delineate/0.2
-
+   Go to the directory <install dir>/delineate/0.3
    double click on or run the file: delineate.bat
-

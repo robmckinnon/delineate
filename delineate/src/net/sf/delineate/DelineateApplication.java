@@ -89,7 +89,7 @@ public class DelineateApplication {
     }
 
     private JPanel initOptionsPanel(final SvgViewerController viewerController) {
-        JLabel label = new JLabel("extract style definitions");
+        JLabel label = new JLabel("create style definitions");
         final JCheckBox checkBox = new JCheckBox();
 
         checkBox.addChangeListener(new ChangeListener() {
