@@ -40,6 +40,11 @@ public class FileUtilities {
 //    }
 
     public static String getUri(String filePath) {
+        if(filePath.startsWith(".")) {
+            String directory = System.getProperty("user.dir");
+            filePath = directory + filePath.substring(1);
+            System.out.println("fille " + filePath);
+        }
         return "file:" + filePath;
     }
 

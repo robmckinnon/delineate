@@ -127,6 +127,20 @@ public class SvgViewerPanel {
 
                 public void documentLoadingCompleted(SVGDocumentLoaderEvent e) {
                     optimizer.setBackground(e.getSVGDocument());
+
+                    if(optimize) {
+                        optimize();
+
+                        if(optimizer.colorGroups()) {
+                            svgCanvas.stopProcessing();
+                            EventQueue.invokeLater(new Runnable() {
+                                public void run() {
+                                    setURI(uri);
+                                }
+                            });
+
+                        }
+                    }
                 }
             });
 
@@ -144,50 +158,45 @@ public class SvgViewerPanel {
 
             public void gvtRenderingCompleted(GVTTreeRendererEvent e) {
                 final File file = FileUtilities.getFile(uri);
-
-                if(optimize) {
-                    setStatus("Optimizing...");
-                    EventQueue.invokeLater(new Runnable() {
-                        public void run() {
-                            optimizer.optimize(file, getSvgDocument());
-
-                            for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
-                                RenderingListener renderingListener = (RenderingListener)iterator.next();
-                                renderingListener.setColors(optimizer.getColors());
-                            }
-
-                            setPathCount(optimizer.getPathCount());
-                            optimize = false;
-                            finishConversion(file, resultText);
-                        }
-                    });
-                } else {
-                    finishConversion(file, resultText);
-                }
+                finishConversion(file, resultText);
             }
 
-            private void finishConversion(File file, String resultText) {
-                viewSourceAction.setSourceUrl(uri);
-
-                Container ancestor = svgCanvas.getTopLevelAncestor();
-                int top = ancestor.getInsets().top;
-                viewSourceAction.setLocation(ancestor.getX() + (top / 2), ancestor.getY() + top);
-
-                String fileSize = FileUtilities.getFileSize(file);
-                setStatus(resultText + file.getName(), pathCount + " paths - " + fileSize);
-
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                        for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
-                            RenderingListener renderingListener = (RenderingListener)iterator.next();
-                            renderingListener.renderingCompleted();
-                        }
-                    }
-                });
-            }
         });
 
-     }
+    }
+
+    private void optimize() {
+        File file = FileUtilities.getFile(uri);
+        optimizer.optimize(file, getSvgDocument());
+
+        for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+            RenderingListener renderingListener = (RenderingListener)iterator.next();
+            renderingListener.setColors(optimizer.getColors());
+        }
+
+        setPathCount(optimizer.getPathCount());
+        optimize = false;
+    }
+
+    private void finishConversion(File file, String resultText) {
+        viewSourceAction.setSourceUrl(uri);
+
+        Container ancestor = svgCanvas.getTopLevelAncestor();
+        int top = ancestor.getInsets().top;
+        viewSourceAction.setLocation(ancestor.getX() + (top / 2), ancestor.getY() + top);
+
+        String fileSize = FileUtilities.getFileSize(file);
+        setStatus(resultText + file.getName(), pathCount + " paths - " + fileSize);
+
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+                    RenderingListener renderingListener = (RenderingListener)iterator.next();
+                    renderingListener.renderingCompleted();
+                }
+            }
+        });
+    }
 
     public void setStatus(String statusText, String fileInfoText) {
         sizeLabel.setText(fileInfoText);

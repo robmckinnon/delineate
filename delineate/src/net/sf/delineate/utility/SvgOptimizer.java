@@ -188,11 +188,11 @@ public class SvgOptimizer {
                 }
 
                 if(noGroups()) {
-                    w.print("<path style=\"");
+                    w.print("<path ");
                     if(centerlineEnabled) {
-                        w.print("fill:none;stroke:#");
+                        w.print("fill=\"none\" stroke=\"#");
                     } else {
-                        w.print("stroke:none;fill:#");
+                        w.print("stroke=\"none\" fill=\"#");
                     }
                     w.print(colorText);
                 } else if(oneGroup()) {
@@ -258,9 +258,9 @@ public class SvgOptimizer {
                 colorText = (String)iterator.next();
                 List pathList = (List)colorToPathsMap.get(colorText);
                 if(centerlineEnabled) {
-                    w.print("<g style=\"fill:none;stroke:#");
+                    w.print("<g fill=\"none\" stroke=\"#");
                 } else {
-                    w.print("<g style=\"stroke:none;fill:#");
+                    w.print("<g stroke=\"none\" fill=\"#");
                 }
                 w.print(colorText);
                 w.println("\">");
@@ -353,7 +353,7 @@ public class SvgOptimizer {
         return type == ONE_GROUP;
     }
 
-    private boolean colorGroups() {
+    public boolean colorGroups() {
         return type == COLOR_GROUPS;
     }
 
