@@ -71,7 +71,7 @@ public class ColorEditor {
 
         JColorChooser colorChooser = new JColorChooser();
         AbstractColorChooserPanel[] chooserPanels = colorChooser.getChooserPanels();
-        chooserPanels = new AbstractColorChooserPanel[] {colorPanel, chooserPanels[1], chooserPanels[2]};
+        chooserPanels = new AbstractColorChooserPanel[] {colorPanel, chooserPanels[0], chooserPanels[1], chooserPanels[2]};
         colorChooser.setChooserPanels(chooserPanels);
         colorChooser.setPreviewPanel(new JPanel());
         colorDialog = JColorChooser.createDialog(parent, "Choose background color", true, colorChooser, null, null);

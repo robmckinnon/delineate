@@ -43,7 +43,7 @@ public class DefaultSwatchChooserPanelCopy extends AbstractColorChooserPanel {
     }
 
     public String getDisplayName() {
-        return UIManager.getString("ColorChooser.swatchesNameText");
+        return "Palette";
     }
 
     /**
@@ -66,7 +66,7 @@ public class DefaultSwatchChooserPanelCopy extends AbstractColorChooserPanel {
      * @since 1.4
      */
     public int getMnemonic() {
-        return getInt("ColorChooser.swatchesMnemonic", -1);
+        return KeyEvent.VK_P;
     }
 
     static int getInt(Object key, int defaultValue) {
