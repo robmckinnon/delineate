@@ -54,6 +54,12 @@ public class DelineateApplication {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
+        JButton saveButton = new JButton(settingsPanel.getSaveSettingsAction());
+        saveButton.setText("Save");
+        buttonPanel.add(saveButton);
+        JButton loadButton = new JButton(settingsPanel.getLoadSettingsAction());
+        loadButton.setText("Load");
+        buttonPanel.add(loadButton);
 
         JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);

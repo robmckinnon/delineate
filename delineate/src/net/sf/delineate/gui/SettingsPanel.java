@@ -20,6 +20,7 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.command.Command;
+import net.sf.delineate.command.Parameter;
 import net.sf.delineate.utility.ColorUtilities;
 import net.sf.delineate.utility.XPathTool;
 import org.xml.sax.SAXException;
@@ -46,9 +47,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -61,6 +60,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Map;
 
 /**
  * Controls user defined settings.
@@ -75,7 +75,9 @@ public class SettingsPanel {
     private Command command;
 //    private JTextArea commandTextArea;
 
-    private final HashMap textFieldMap = new HashMap(5);
+    private final Map textFieldMap = new HashMap(5);
+    private final Map checkBoxMap = new HashMap(23);
+    private final Map spinnerSliderMap = new HashMap(23);
 
     private final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -83,10 +85,10 @@ public class SettingsPanel {
 
             if(source instanceof SpinnerSlider) {
                 SpinnerSlider spinnerSlider = (SpinnerSlider)source;
-                command.setParameterValue(spinnerSlider.getName(), spinnerSlider.getValueAsString());
+                command.setParameterValue(spinnerSlider.getName(), spinnerSlider.getValueAsString(), false);
             } else {
                 JCheckBox checkBox = (JCheckBox)e.getSource();
-                command.setParameterEnabled(checkBox.getName(), checkBox.isSelected());
+                command.setParameterEnabled(checkBox.getName(), checkBox.isSelected(), false);
             }
         }
     };
@@ -94,7 +96,7 @@ public class SettingsPanel {
     private final KeyAdapter textFieldKeyListener = new KeyAdapter() {
         public void keyReleased(KeyEvent e) {
             JTextField textField = ((JTextField)e.getSource());
-            command.setParameterValue(textField.getName(), textField.getText());
+            command.setParameterValue(textField.getName(), textField.getText(), false);
         }
     };
     private static final String BACKGROUND_COLOR_PARAMETER = "background-color";
@@ -171,21 +173,21 @@ public class SettingsPanel {
 
     public Action getLoadSettingsAction() {
         AbstractAction action = new AbstractAction() {
-                    public void actionPerformed(ActionEvent event) {
-                        String settingsFile = "settings.prop";
-                        File file = new File(settingsFile);
-                        Properties properties = new Properties();
+            public void actionPerformed(ActionEvent event) {
+                String settingsFile = "settings.prop";
+                File file = new File(settingsFile);
+                Properties properties = new Properties();
 
-                        try {
-                            BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
-                            properties.load(inStream);
-                            String property = properties.getProperty("setting");
-                            command.setCommand(property);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
+                try {
+                    BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
+                    properties.load(inStream);
+                    String property = properties.getProperty("setting");
+                    command.setCommand(property);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
 
         setKeyBinding(LOAD_SETTINGS_ACTION, KeyEvent.VK_L, KeyEvent.CTRL_MASK, action);
 
@@ -202,18 +204,33 @@ public class SettingsPanel {
 //    }
 
     private JPanel initContentPane(String parameterFile) throws ParserConfigurationException, IOException, SAXException, TransformerException {
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.setLayout(new SpringLayout());
+
         XPathTool xpath = new XPathTool(new File(parameterFile));
 
         int parameterCount = xpath.count("/parameters/parameter");
 
         command = new Command(parameterCount, new Command.CommandChangeListener() {
-            public void commandChanged(String commandText) {
-//                commandTextArea.setText(commandText);
+            public void enabledChanged(Parameter parameter) {
+                String name = parameter.getName();
+                JCheckBox checkBox = (JCheckBox)checkBoxMap.get(name);
+                if(checkBox != null) checkBox.setSelected(parameter.isEnabled());
+            }
+
+            public void valueChanged(Parameter parameter) {
+                String name = parameter.getName();
+                JTextField textField = (JTextField)textFieldMap.get(name);
+                if(textField != null) {
+                    textField.setText(parameter.getValue());
+                }
+
+                SpinnerSlider spinnerSlider = (SpinnerSlider)spinnerSliderMap.get(name);
+                if(spinnerSlider != null) {
+                    spinnerSlider.setValue(parameter.getValue());
+                }
             }
         });
-
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setLayout(new SpringLayout());
 
         for(int type = 0; type < 3; type++) {
             for(int i = 0; i < parameterCount; i++) {
@@ -312,6 +329,7 @@ public class SettingsPanel {
         spinnerSlider.setEnabled(enabled);
         spinnerSlider.setTooltipText(desc);
         spinnerSlider.addChangeListener(changeListener);
+        spinnerSliderMap.put(name, spinnerSlider);
 
         if(!useWholeNumbers) {
             int fractionalDigits = stepString.substring(stepString.indexOf('.') + 1).length();
@@ -363,7 +381,7 @@ public class SettingsPanel {
         Color color = JColorChooser.showDialog(panel, "Choose background color", initialColor);
         if(color != null) {
             String hexColor = ColorUtilities.getHexColor(color);
-            command.setParameterValue(BACKGROUND_COLOR_PARAMETER, hexColor);
+            command.setParameterValue(BACKGROUND_COLOR_PARAMETER, hexColor, false);
             textField.setText(hexColor);
             textField.setBackground(color);
         }
@@ -382,7 +400,7 @@ public class SettingsPanel {
                     File file = fileChooser.getSelectedFile();
                     JTextField textField = getTextField(name);
                     textField.setText(file.getPath());
-                    command.setParameterValue(textField.getName(), textField.getText());
+                    command.setParameterValue(textField.getName(), textField.getText(), false);
                 }
             }
         });
@@ -391,6 +409,7 @@ public class SettingsPanel {
 
     private JCheckBox initCheckbox(final String name, String desc, boolean enabled, final SpinnerSlider spinnerSlider, final JButton button) {
         final JCheckBox checkBox = new JCheckBox("", false);
+        checkBoxMap.put(name, checkBox);
         checkBox.setName(name);
         checkBox.setToolTipText(desc);
         checkBox.setSelected(enabled);

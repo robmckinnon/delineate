@@ -35,6 +35,18 @@ public class Parameter implements Comparable {
         this.value = value;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
     public String paramValue() {
         if(enabled) {
             if(name.equals("input-file")) {

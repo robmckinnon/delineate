@@ -30,13 +30,14 @@ import java.util.StringTokenizer;
  */
 public class Command {
 
-//    private CommandChangeListener changeListener;
+    private CommandChangeListener changeListener;
     private Parameter[] parameters;
     int parameterCount = 0;
+    private static final String INPUT_FILE_PARAMETER = "input-file";
 
     public Command(int totalParameterCount, CommandChangeListener listener) {
         parameters = new Parameter[totalParameterCount];
-//        changeListener = listener;
+        changeListener = listener;
     }
 
     public void addParameter(String name, boolean enabled, String value) {
@@ -50,25 +51,29 @@ public class Command {
 
         if(parameterCount == parameters.length) {
             Arrays.sort(parameters);
-//            changeListener.commandChanged(getCommand());
+//            changeListener.enabledChanged(parameter);
         }
     }
 
-    public void setParameterEnabled(String name, boolean enabled) {
+    public void setParameterEnabled(String name, boolean enabled, boolean notify) {
         Parameter parameter = getParameter(name);
 
         if(parameter.enabled != enabled) {
             parameter.enabled = enabled;
-//            changeListener.commandChanged(getCommand());
+        }
+        if(notify) {
+            changeListener.enabledChanged(parameter);
         }
     }
 
-    public void setParameterValue(String name, String value) {
+    public void setParameterValue(String name, String value, boolean notify) {
         Parameter parameter = getParameter(name);
 
         if(!parameter.value.equals(value)) {
             parameter.value = value;
-//            changeListener.commandChanged(getCommand());
+        }
+        if(notify) {
+            changeListener.valueChanged(parameter);
         }
     }
 
@@ -80,7 +85,7 @@ public class Command {
     }
 
     private Parameter getParameter(String name) {
-        if(name.equals("input-file")) {
+        if(name.equals(INPUT_FILE_PARAMETER)) {
             return parameters[parameters.length -1];
         } else {
             int index = Arrays.binarySearch(parameters, name);
@@ -96,17 +101,31 @@ public class Command {
     public void setCommand(String command) {
         StringTokenizer tokenizer = new StringTokenizer(command, " ");
         tokenizer.nextToken();
-
+        String name = tokenizer.nextToken();
         while(tokenizer.hasMoreTokens()) {
-            
+            if(name.charAt(0) == '-') {
+                name = name.substring(1);
+                setParameterEnabled(name, true, true);
+
+                String value = tokenizer.nextToken();
+                if(value.charAt(0) != '-') {
+                    setParameterValue(name, value, true);
+                    name = tokenizer.nextToken();
+                } else {
+                    name = value;
+                }
+            }
         }
+
+        setParameterValue(INPUT_FILE_PARAMETER, name, true);
     }
 
     /**
      * For listening to command changes.
      */
     public interface CommandChangeListener {
-        void commandChanged(String commandText);
+        void enabledChanged(Parameter parameter);
+        void valueChanged(Parameter parameter);
     }
 
 }

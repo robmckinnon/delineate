@@ -50,6 +50,14 @@ public class SpinnerSlider {
         initSlider(model);
     }
 
+    public void setValue(String value) {
+        if(useWholeNumbers) {
+            model.setValue(Integer.valueOf(value));
+        } else {
+            model.setValue(Double.valueOf(value));
+        }
+    }
+
     public void addChangeListener(ChangeListener listener) {
         changeListener = listener;
     }
