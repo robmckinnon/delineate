@@ -22,16 +22,17 @@ package net.sf.delineate.gui;
 
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.JGVTComponent;
-import org.apache.batik.swing.gvt.Interactor;
-import org.apache.batik.swing.gvt.AbstractPanInteractor;
+//import org.apache.batik.swing.gvt.Interactor;
+//import org.apache.batik.swing.gvt.AbstractPanInteractor;
+import org.w3c.dom.svg.SVGDocument;
 
 import javax.swing.Scrollable;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.Container;
 import java.awt.Window;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+//import java.awt.event.InputEvent;
+//import java.awt.event.MouseEvent;
 
 public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
 
@@ -107,6 +108,10 @@ public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
             }
         }
 
+    }
+
+    public void installSVGDocument(SVGDocument doc) {
+        super.installSVGDocument(doc);
     }
 
     /**

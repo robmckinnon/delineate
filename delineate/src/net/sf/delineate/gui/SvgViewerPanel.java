@@ -21,7 +21,6 @@ package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.SvgOptimizer;
-import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
 import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
@@ -59,7 +58,7 @@ public class SvgViewerPanel {
 
     public static final String VIEW_SOURCE_ACTION = "ViewSource";
 
-    private final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
+    private final ScrollableJSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
     private final JLabel statusLabel = new JLabel(" ");
     private final JLabel sizeLabel = new JLabel("");
     private final ViewSourceAction viewSourceAction = new ViewSourceAction();
@@ -219,7 +218,11 @@ public class SvgViewerPanel {
 
     public void setSvgDocument(String uri, SVGDocument svgDocument) {
         this.uri = uri;
-        svgCanvas.setSVGDocument(svgDocument);
+        if(svgDocument == null) {
+            svgCanvas.installSVGDocument(svgDocument);
+        } else {
+            svgCanvas.setSVGDocument(svgDocument);
+        }
     }
 
     public JScrollBar getHorizontalScrollBar() {
