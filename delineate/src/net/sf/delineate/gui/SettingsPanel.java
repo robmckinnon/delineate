@@ -441,39 +441,43 @@ public class SettingsPanel {
     }
 
     private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, final String name) {
+        String labelName = name.replace('-', ' ');
         boolean isFileParameter = name.endsWith("file");
-
-        JLabel label = new JLabel(name.replace('-', ' '));
-        label.setToolTipText(desc);
-
+        boolean isBgColorParameter = name.equals(BACKGROUND_COLOR_PARAMETER);
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(label, BorderLayout.WEST);
+
+        JButton button = null;
+        if(!isFileParameter && !isBgColorParameter) {
+            JLabel label = new JLabel(labelName);
+            label.setToolTipText(desc);
+            panel.add(label, BorderLayout.WEST);
+        } else if(isBgColorParameter) {
+            button = initColorChooserButton(labelName, panel);
+            panel.add(button, BorderLayout.WEST);
+        } else if(isFileParameter) {
+            button = initFileChooserButton(name, labelName);
+            panel.add(button, BorderLayout.WEST);
+        }
 
         if(optional) {
-            JButton button = null;
-
-            if(name.equals(BACKGROUND_COLOR_PARAMETER)) {
-                button = new JButton("C");
-                button.setToolTipText("Choose color");
-                button.setEnabled(false);
-                button.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        chooseColor(panel);
-                    }
-                });
-
-                JPanel p = new JPanel();
-                p.add(button);
-                panel.add(p);
-            }
             JCheckBox checkBox = initCheckbox(name, desc, enabled, spinnerSlider, button);
             panel.add(checkBox, BorderLayout.EAST);
-        } else if(isFileParameter) {
-            JButton button = initFileChooserButton(name);
-            panel.add(button, BorderLayout.EAST);
         }
 
         return panel;
+    }
+
+    private JButton initColorChooserButton(String labelName, final JPanel panel) {
+        JButton button;
+        button = new JButton(labelName);
+        button.setToolTipText("Choose color");
+        button.setEnabled(false);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                chooseColor(panel);
+            }
+        });
+        return button;
     }
 
     private void chooseColor(final JPanel panel) {
@@ -489,10 +493,10 @@ public class SettingsPanel {
         }
     }
 
-    private JButton initFileChooserButton(final String name) {
+    private JButton initFileChooserButton(final String name, String labelName) {
         final JFileChooser fileChooser = new JFileChooser();
 
-        JButton button = new JButton("browse");
+        JButton button = new JButton(labelName);
         button.setToolTipText("Browse files");
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -515,6 +519,7 @@ public class SettingsPanel {
         checkBox.setName(name);
         checkBox.setToolTipText(desc);
         checkBox.setSelected(enabled);
+        checkBox.setFocusPainted(true);
         if(spinnerSlider != null) {
             checkBox.addChangeListener(new ChangeListener() {
                 public void stateChanged(ChangeEvent e) {
