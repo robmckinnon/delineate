@@ -123,6 +123,7 @@ public class SvgViewerPanel {
         if(uri != null) {
             File file = getFile(uri);
             File previousFile = new File(file.getParent(), file.getName() + '~');
+            previousFile.delete();
             file.renameTo(previousFile);
             svgCanvasB.setSVGDocument(null); // hack to prevent problem loading relative URI
             svgCanvasB.setURI(uri + '~');
