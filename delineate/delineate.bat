@@ -1,1 +1,2 @@
-start %JAVA_HOME%/bin/java -jar delineate.jar parameters.xml
+@echo off
+start %JAVA_HOME%/bin/javaw -jar delineate.jar parameters.xml
