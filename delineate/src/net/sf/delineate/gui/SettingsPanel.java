@@ -60,7 +60,7 @@ import java.util.Map;
  * Controls user defined settings.
  * @author robmckinnon@users.sourceforge.net
  */
-public class SettingsPanel {
+public class SettingsPanel implements RenderingListener {
 
     private static final String INPUT_FILE_ACTION = "InputFileAction";
     private static final String OUTPUT_FILE_ACTION = "OutputFileAction";
@@ -108,6 +108,10 @@ public class SettingsPanel {
         SaveSettingsPanel saveSettingsPanel = new SaveSettingsPanel(command);
 
         panel.add(saveSettingsPanel.getPanel(), BorderLayout.SOUTH);
+    }
+
+    public void renderingCompleted() {
+        updateFileSize();
     }
 
     public JPanel getPanel() {

@@ -19,12 +19,13 @@
  */
 package net.sf.delineate;
 
+import net.sf.delineate.gui.RenderingListener;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
-import net.sf.delineate.utility.SvgOptimizer;
 import net.sf.delineate.utility.RuntimeUtility;
+import net.sf.delineate.utility.SvgOptimizer;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -39,18 +40,23 @@ import javax.swing.JSplitPane;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseMotionAdapter;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
  * @author robmckinnon@users.sourceforge.net
  */
 public class DelineateApplication {
-    private static final String CONVERT_IMAGE_ACTION = "Convert";
+    public static final String CONVERT_IMAGE_ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
     private final SvgViewerController svgViewerController;
+    private JPanel convertPanel;
 
     public DelineateApplication(String parameterFile) throws Exception {
         assertAutotraceInstalled();
@@ -58,25 +64,15 @@ public class DelineateApplication {
 
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
-        svgViewerController = new SvgViewerController(new ConversionListener() {
-            public void conversionFinished() {
-                settingsPanel.updateFileSize();
-                Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
-                action.setEnabled(true);
-            }
+        svgViewerController = initSvgViewerController(settingsPanel);
 
-            public void setColors(Color[] colors) {
-                settingsPanel.setColors(colors);
-            }
-        });
-
-        JButton button = initConvertButton(settingsPanel);
         JPanel optionsPanel = initOptionsPanel(svgViewerController);
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(button);
+        convertPanel = new JPanel();
+        JButton button = initConvertButton(convertPanel, settingsPanel);
+        convertPanel.add(button);
 
-        JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel, optionsPanel);
+        JPanel controlPanel = createControlPanel(settingsPanel, convertPanel, optionsPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, svgViewerController.getSvgViewerPanels(), controlPanel);
@@ -88,7 +84,27 @@ public class DelineateApplication {
         frame.setIconImage(image.getImage());
         frame.setBounds(130, 0, 800, 735);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        frame.getGlassPane().addMouseListener(new MouseAdapter() {});
+        frame.getGlassPane().addMouseMotionListener(new MouseMotionAdapter() {});
+        frame.getGlassPane().addKeyListener(new KeyAdapter() {});
+
         frame.setVisible(true);
+    }
+
+    private SvgViewerController initSvgViewerController(final SettingsPanel settingsPanel) {
+        SvgViewerController svgViewerController = new SvgViewerController();
+        svgViewerController.addRenderingListener(settingsPanel);
+        svgViewerController.addRenderingListener(new RenderingListener() {
+            public void renderingCompleted() {
+                enableGui();
+            }
+
+            public void setColors(Color[] colors) {
+            }
+        });
+
+        return svgViewerController;
     }
 
     private boolean assertAutotraceInstalled() {
@@ -161,8 +177,8 @@ public class DelineateApplication {
         return controlWrapperPanel;
     }
 
-    private JButton initConvertButton(final SettingsPanel settingsPanel) {
-        JButton button = GuiUtilities.initButton("Run", CONVERT_IMAGE_ACTION, KeyEvent.VK_ENTER, 0, settingsPanel.getPanel(), new AbstractAction() {
+    private JButton initConvertButton(final JPanel panel, final SettingsPanel settingsPanel) {
+        JButton button = GuiUtilities.initButton("Run", CONVERT_IMAGE_ACTION, KeyEvent.VK_ENTER, 0, panel, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 convert(settingsPanel);
             }
@@ -174,8 +190,7 @@ public class DelineateApplication {
 
     private void convert(final SettingsPanel settingsPanel) {
         if(settingsPanel.inputFileExists()) {
-            Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
-            action.setEnabled(false);
+            disableGui();
             svgViewerController.setStatus("Converting...");
 
             new Thread() {
@@ -194,7 +209,7 @@ public class DelineateApplication {
 
                         svgViewerController.load(FileUtilities.getUri(outputFile));
                     } catch(Exception e) {
-                        GuiUtilities.showMessage("An error occurred, cannot run conversion: \n"
+                        GuiUtilities.showMessageInEventQueue("An error occurred, cannot run conversion: \n"
                             + e.getMessage(), "Error");
                     }
                 }
@@ -206,14 +221,25 @@ public class DelineateApplication {
         }
     }
 
-    public static void main(String args[]) throws Exception {
-        new DelineateApplication(args[0]);
+    private void setConvertImageActionEnabled(boolean enabled) {
+        Action action = convertPanel.getActionMap().get(CONVERT_IMAGE_ACTION);
+        action.setEnabled(enabled);
     }
 
-    public static interface ConversionListener {
-        void conversionFinished();
+    private void disableGui() {
+        frame.getGlassPane().setVisible(true);
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        setConvertImageActionEnabled(false);
+    }
 
-        void setColors(Color[] colors);
+    private void enableGui() {
+        setConvertImageActionEnabled(true);
+        frame.getGlassPane().setVisible(false);
+        frame.setCursor(Cursor.getDefaultCursor());
+    }
+
+    public static void main(String args[]) throws Exception {
+        new DelineateApplication(args[0]);
     }
 
 }

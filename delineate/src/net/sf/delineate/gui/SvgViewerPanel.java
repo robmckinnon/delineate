@@ -19,7 +19,6 @@
  */
 package net.sf.delineate.gui;
 
-import net.sf.delineate.DelineateApplication;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.SvgOptimizer;
 import org.apache.batik.swing.JSVGCanvas;
@@ -48,6 +47,9 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
 
 /**
  * Panel for viewing SVG files.
@@ -64,7 +66,7 @@ public class SvgViewerPanel {
     private final JPopupMenu popupMenu = new JPopupMenu();
     private final SvgOptimizer optimizer = new SvgOptimizer();
 
-    private DelineateApplication.ConversionListener listener;
+    private List renderingListenerList = new ArrayList();
     private JScrollBar horizontalScrollBar;
     private JScrollBar verticalScrollBar;
     private JPanel viewerPanel;
@@ -148,7 +150,12 @@ public class SvgViewerPanel {
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
                             optimizer.optimize(file, getSvgDocument());
-                            listener.setColors(optimizer.getColors());
+
+                            for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+                                RenderingListener renderingListener = (RenderingListener)iterator.next();
+                                renderingListener.setColors(optimizer.getColors());
+                            }
+
                             setPathCount(optimizer.getPathCount());
                             optimize = false;
                             finishConversion(file, resultText);
@@ -167,20 +174,29 @@ public class SvgViewerPanel {
                 viewSourceAction.setLocation(ancestor.getX() + (top / 2), ancestor.getY() + top);
 
                 String fileSize = FileUtilities.getFileSize(file);
-                setStatus(resultText + file.getName());
-                sizeLabel.setText(pathCount + " paths - " + fileSize);
+                setStatus(resultText + file.getName(), pathCount + " paths - " + fileSize);
 
-                if(listener != null) {
-                    listener.conversionFinished();
-                }
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                        for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+                            RenderingListener renderingListener = (RenderingListener)iterator.next();
+                            renderingListener.renderingCompleted();
+                        }
+                    }
+                });
             }
         });
 
      }
 
-    public void setStatus(String text) {
-        statusLabel.setText(text);
-        statusLabel.repaint();
+    public void setStatus(String statusText, String fileInfoText) {
+        sizeLabel.setText(fileInfoText);
+        setStatus(statusText);
+    }
+
+    public void setStatus(String statusText) {
+        statusLabel.setText(statusText);
+//        statusLabel.repaint();
     }
 
     public Action getAction(String actionKey) {
@@ -264,8 +280,8 @@ public class SvgViewerPanel {
         return svgCanvas.getSVGDocument();
     }
 
-    public void addConversionListener(DelineateApplication.ConversionListener listener) {
-        this.listener = listener;
+    public void addRenderingListener(RenderingListener listener) {
+        renderingListenerList.add(listener);
     }
 
     public void setOptimize(boolean optimize) {

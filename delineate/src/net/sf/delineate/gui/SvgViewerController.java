@@ -20,7 +20,6 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
-import net.sf.delineate.DelineateApplication;
 import org.apache.batik.swing.JSVGCanvas;
 import org.w3c.dom.Document;
 import org.w3c.dom.svg.SVGDocument;
@@ -59,7 +58,7 @@ public class SvgViewerController {
 
     private JPanel panel = new JPanel(new BorderLayout());
 
-    public SvgViewerController(DelineateApplication.ConversionListener listener) {
+    public SvgViewerController() {
         svgViewerA = new SvgViewerPanel("Result: ", InputEvent.CTRL_MASK);
         svgViewerB = new SvgViewerPanel("Previous result: ", InputEvent.CTRL_MASK + InputEvent.SHIFT_MASK);
 
@@ -68,18 +67,21 @@ public class SvgViewerController {
         splitPane.setDividerLocation(0.5);
         splitPane.setResizeWeight(0.5);
 
-        installListeners(listener);
+        installListeners();
         installActions();
 
         panel.add(splitPane);
     }
 
-    private void installListeners(DelineateApplication.ConversionListener listener) {
+    public void addRenderingListener(RenderingListener listener) {
+        svgViewerA.addRenderingListener(listener);
+    }
+
+    private void installListeners() {
         ScrollListener scrollListenerA = new ScrollListener(svgViewerB.getHorizontalScrollBar(), svgViewerB.getVerticalScrollBar());
         ScrollListener scrollListenerB = new ScrollListener(svgViewerA.getHorizontalScrollBar(), svgViewerA.getVerticalScrollBar());
 
         svgViewerA.addAdjustmentListener(scrollListenerA);
-        svgViewerA.addConversionListener(listener);
         svgViewerB.addAdjustmentListener(scrollListenerB);
     }
 
@@ -213,7 +215,7 @@ public class SvgViewerController {
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Batik");
-        SvgViewerController app = new SvgViewerController(null);
+        SvgViewerController app = new SvgViewerController();
         frame.setContentPane(app.getSvgViewerPanels());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -222,7 +224,7 @@ public class SvgViewerController {
     }
 
     public void setStatus(String text) {
-        svgViewerA.setStatus(text);
+        svgViewerA.setStatus(text, "");
     }
 
     public Document getSvgDocument() {
