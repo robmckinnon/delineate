@@ -29,10 +29,20 @@ import java.io.InputStreamReader;
  */
 public class RuntimeUtility {
 
-    public static void execute(String[] commandArray) throws IOException, InterruptedException {
+    public static void execute(String command) throws IOException, InterruptedException {
+        Runtime runtime = Runtime.getRuntime();
+        Process process = runtime.exec(command);
+        waitForCompletion(process);
+    }
+
+    public static BufferedReader execute(String[] commandArray) throws IOException, InterruptedException {
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(commandArray, null, null);
+        waitForCompletion(process);
+        return new BufferedReader(new InputStreamReader(process.getInputStream()));
+    }
 
+    private static void waitForCompletion(Process process) throws InterruptedException, IOException {
         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
         process.waitFor();
         if(errorReader.ready()) {
@@ -40,6 +50,7 @@ public class RuntimeUtility {
             while(errorReader.ready()) {
                 buffer.append('\n' + errorReader.readLine());
             }
+            errorReader.close();
             String message = buffer.toString();
             if(message.indexOf("premature end of file") == -1) {
                 throw new RuntimeException(message);
@@ -65,5 +76,12 @@ public class RuntimeUtility {
         return buffer.toString();
     }
 
+    public static void main(String[] args) throws Exception {
+        args = new String[] {"C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe", "C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg"};
+//        args = new String[] {"C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe", "ee"};
+//        execute("C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm \"C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg\"");
+//        execute("C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe \"C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg\"");
+        execute(args);
+    }
 
 }

@@ -19,10 +19,17 @@
  */
 package net.sf.delineate.utility;
 
+import net.sourceforge.jiu.gui.awt.ToolkitLoader;
+import net.sourceforge.jiu.data.PixelImage;
+import net.sourceforge.jiu.codecs.PNMCodec;
+import net.sourceforge.jiu.codecs.CodecMode;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 
 /**
  * File helper methods.
@@ -113,13 +120,27 @@ public class FileUtilities {
 
     public static String getExtension(File file) {
         String ext = "";
-        String[] parts = file.getName().split("[.]");
-        if(parts.length == 2) {
-            ext = parts[1];
+        String name = file.getName();
+        int index = name.lastIndexOf('.');
+        if(index != -1 && name.length() >= index) {
+            ext = name.substring(index + 1);
         }
         return ext;
     }
 
+    public static File convertToPnm(File file) throws Exception {
+        PixelImage pixelImage = ToolkitLoader.loadViaToolkitOrCodecs(file.getPath(), true, null);
+        PNMCodec codec = new PNMCodec();
+        String extension = codec.suggestFileExtension(pixelImage);
+        File outputFile = new File(file.getParent(), file.getName() + extension);
+        codec.setImage(pixelImage);
+        codec.setFile(outputFile, CodecMode.SAVE);
+        codec.process();
+        codec.close();
+
+        return outputFile;
+    }
+/*
     public static File convertToPnm(File file, String extension) {
         String conversionProgram = null;
         if(extension.equalsIgnoreCase("jpg") || extension.equalsIgnoreCase("jpeg")) {
@@ -133,20 +154,27 @@ public class FileUtilities {
         if(conversionProgram != null) {
             try {
                 String name = file.getName().split("[.]")[0] + ".pnm";
-                String[] commandArray = {"cat", file.getName(), "|", conversionProgram, ">", name};
-
-                RuntimeUtility.execute(commandArray);
                 File newFile = new File(file.getParent(), name);
+//                String[] commandArray = {"cat", file.getPath(), "|", conversionProgram, ">", newFile.getPath()};
+                String[] commandArray = {conversionProgram, file.getPath()};
+//                String command = "cat \"" + file.getPath() + "\" | " + conversionProgram + " > \"" + newFile.getPath() + "\"";
+
+                BufferedReader reader = RuntimeUtility.execute(commandArray);
+                BufferedWriter writer = new BufferedWriter(new FileWriter(newFile));
+                while(reader.ready()) {
+                    writer.write(reader.readLine());
+                    writer.newLine();
+                }
+                reader.close();
+                writer.close();
                 return newFile;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
         } else {
-            throw new RuntimeException("");
+            throw new RuntimeException("Cannot convert file with extension " + extension);
         }
     }
-
+*/
 
 }

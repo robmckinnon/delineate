@@ -221,8 +221,12 @@ public class DelineateApplication {
                         String extension = FileUtilities.getExtension(inputFile);
 
                         if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
-                            FileUtilities.convertToPnm(inputFile, extension);
+                            File file = FileUtilities.convertToPnm(inputFile);
+                            if(file.exists()) {
+                                settingsPanel.setInputFile(file);
+                            }
                         };
+                        
                         final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.movePreviousSvg(outputFile);
 

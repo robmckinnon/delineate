@@ -134,6 +134,10 @@ public class SettingsPanel implements RenderingListener {
         return file;
     }
 
+    public void setInputFile(File file) {
+        command.setParameterValue(Command.INPUT_FILE_PARAMETER, file.getPath(), true);
+    }
+
     public String getOutputFile() {
         return command.getParameterValue(Command.OUTPUT_FILE_PARAMETER);
     }
