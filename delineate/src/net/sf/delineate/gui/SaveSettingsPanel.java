@@ -59,6 +59,7 @@ public class SaveSettingsPanel {
 
     private Properties savedSettings;
     private JComboBox loadSettingsCombo;
+    private boolean loadSettingsEnabled = true;
 
     public SaveSettingsPanel(Command command) throws Exception {
         this.command = command;
@@ -100,7 +101,9 @@ public class SaveSettingsPanel {
                 }
 
                 if(!name.equals(initialName)) {
+                    loadSettingsEnabled = false;
                     loadSettingsCombo.setSelectedItem(name);
+                    loadSettingsEnabled = true;
                 }
             }
         }
@@ -187,19 +190,22 @@ public class SaveSettingsPanel {
     }
 
     private void loadSettings(String settingName) {
-        String commandSetting = savedSettings.getProperty(settingName);
         Action deleteAction = panel.getActionMap().get(DELETE_SETTINGS_ACTION);
-
-        if(settingName.equals(DEFAULT_SETTING_NAME)) {
-            command.setCommandDefaultValues();
-        }
-
-        command.setCommand(commandSetting);
 
         if(settingName.equals(DEFAULT_SETTING_NAME)) {
             deleteAction.setEnabled(false);
         } else {
             deleteAction.setEnabled(true);
+        }
+
+        if(loadSettingsEnabled) {
+            String commandSetting = savedSettings.getProperty(settingName);
+
+            if(settingName.equals(DEFAULT_SETTING_NAME)) {
+                command.setCommandDefaultValues();
+            }
+
+            command.setCommand(commandSetting);
         }
     }
 

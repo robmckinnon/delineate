@@ -23,6 +23,7 @@ import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.DelineateApplication;
 import org.apache.batik.swing.JSVGCanvas;
 import org.w3c.dom.Document;
+import org.w3c.dom.svg.SVGDocument;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -36,13 +37,14 @@ import javax.swing.KeyStroke;
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
 import java.awt.Event;
-import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Controls the SVG viewer panels.
@@ -164,25 +166,40 @@ public class SvgViewerController {
         return panel;
     }
 
-    public void movePreviousSvg() {
+    public void movePreviousSvg() throws InterruptedException, InvocationTargetException {
         if(uri != null) {
             svgViewerA.closeViewSourceFrame();
             svgViewerB.closeViewSourceFrame();
+
             File file = FileUtilities.getFile(uri);
             File previousFile = new File(file.getParent(), file.getName() + '~');
-            previousFile.delete();
+            if(previousFile.exists()) {
+                previousFile.delete();
+            }
             file.renameTo(previousFile);
 
             svgViewerB.setPathCount(svgViewerA.getPathCount());
-            svgViewerB.setSvgDocument(uri + '~', svgViewerA.getSvgDocument());
+            final SVGDocument svgDocument = (SVGDocument)svgViewerA.getSvgDocument().cloneNode(true);
+
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+//                    svgViewerB.setURI(uri + '~');
+//                    svgViewerB.setSvgDocument(uri + '~', svgViewerA.getSvgDocument());
+                    svgViewerB.setSvgDocument(uri + '~', svgDocument);
+                }
+            });
         }
     }
 
-    public void load(String uri) {
+    public void load(final String uri) {
         this.uri = uri;
         System.out.println("loading " + uri);
         svgViewerA.setOptimize(true);
-        svgViewerA.setURI(uri);
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                svgViewerA.setURI(uri);
+            }
+        });
     }
 
     public static void main(String[] args) {

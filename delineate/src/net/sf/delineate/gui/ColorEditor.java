@@ -94,7 +94,6 @@ public class ColorEditor {
                         editor.setBackground(color);
                         editor.setForeground(foreground);
                         editor.setCaretColor(foreground);
-                        command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, colorText, false);
                     }
                 }
             }
@@ -106,18 +105,18 @@ public class ColorEditor {
     private KeyAdapter initColorKeyListener() {
         return new KeyAdapter() {
             public void keyReleased(KeyEvent event) {
-                JComboBox combo = colorCombo;
                 JTextField textField = (JTextField)event.getSource();
-                String text = textField.getText();
+                String colorText = textField.getText();
 
-                if(text.length() == 6) {
+                if(colorText.length() == 6) {
                     try {
-                        if(!colorSet.contains(text)) {
-                            combo.insertItemAt(text, 0);
-                            colorSet.add(text);
+                        if(!colorSet.contains(colorText)) {
+                            colorCombo.insertItemAt(colorText, 0);
+                            colorSet.add(colorText);
                         }
 
-                        combo.setSelectedItem(text);
+                        colorCombo.setSelectedItem(colorText);
+                        command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, colorText, false);
                     } catch(Exception e) {
 
                     }
@@ -149,6 +148,7 @@ public class ColorEditor {
                 colorSet.add(colorText);
             }
             colorCombo.setSelectedItem(colorText);
+            command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, colorText, false);
         } catch(Exception e) {
             e.printStackTrace();
         }

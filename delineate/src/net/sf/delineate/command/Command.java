@@ -144,6 +144,9 @@ public class Command {
                 } else {
                     name = value;
                 }
+            } else if(name.charAt(0) == '\"') {
+                name += ' ' + tokenizer.nextToken();
+                System.out.println("name " + name);
             }
         }
     }

@@ -50,7 +50,7 @@ import java.io.IOException;
 public class DelineateApplication {
     private static final String CONVERT_IMAGE_ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter v0.3");
-    private SvgViewerController svgViewerController;
+    private final SvgViewerController svgViewerController;
 
     public DelineateApplication(String parameterFile) throws Exception {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
@@ -67,7 +67,7 @@ public class DelineateApplication {
             }
         });
 
-        JButton button = initConvertButton(settingsPanel, svgViewerController);
+        JButton button = initConvertButton(settingsPanel);
         JPanel optionsPanel = initOptionsPanel(svgViewerController);
 
         JPanel buttonPanel = new JPanel();
@@ -83,7 +83,7 @@ public class DelineateApplication {
         frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 30, 800, 750);
+        frame.setBounds(130, 30, 800, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -127,10 +127,10 @@ public class DelineateApplication {
         return controlWrapperPanel;
     }
 
-    private JButton initConvertButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
+    private JButton initConvertButton(final SettingsPanel settingsPanel) {
         JButton button = GuiUtilities.initButton("Run", CONVERT_IMAGE_ACTION, KeyEvent.VK_ENTER, 0, settingsPanel.getPanel(), new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                convert(settingsPanel, viewerController);
+                convert(settingsPanel);
             }
         });
 
@@ -138,34 +138,39 @@ public class DelineateApplication {
         return button;
     }
 
-    private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
+    private void convert(final SettingsPanel settingsPanel) {
         if(settingsPanel.inputFileExists()) {
             Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
             action.setEnabled(false);
             svgViewerController.setStatus("Converting...");
 
-            viewerController.movePreviousSvg();
+            new Thread() {
+                public void run() {
+                    try {
+                        svgViewerController.movePreviousSvg();
 
-            String command = settingsPanel.getCommand();
-            System.out.println(command);
+                        String command = settingsPanel.getCommand();
+                        System.out.println(command);
 
-            try {
-                Process process = Runtime.getRuntime().exec(command);
-                process.waitFor();
-                String outputFile = settingsPanel.getOutputFile();
-                viewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
-                viewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
-                viewerController.load("file:" + outputFile);
-            } catch(Exception e) {
-                e.printStackTrace();
-                if(e instanceof IOException) {// && e.getMessage().indexOf("autotrace: not found") != -1) {
-                    showMessage("You must install AutoTrace to run conversions.\n" +
-                        "See INSTALL.txt file for details.", "AutoTrace not installed");
-                    System.exit(0);
-                } else {
-                    showMessage("An error occurred, cannot run conversion: \n" + e.getMessage(), "Error");
+                        Process process = Runtime.getRuntime().exec(command);
+                        process.waitFor();
+                        final String outputFile = settingsPanel.getOutputFile();
+                        svgViewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
+                        svgViewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
+
+                        svgViewerController.load("file:" + outputFile);
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        if(e instanceof IOException) {// && e.getMessage().indexOf("autotrace: not found") != -1) {
+                            showMessage("You must install AutoTrace to run conversions.\n" +
+                                "See INSTALL.txt file for details.", "AutoTrace not installed");
+                            System.exit(0);
+                        } else {
+                            showMessage("An error occurred, cannot run conversion: \n" + e.getMessage(), "Error");
+                        }
+                    }
                 }
-            }
+            }.start();
 
         } else {
             showMessage("Input file does not exist.", "Invalid input file");
