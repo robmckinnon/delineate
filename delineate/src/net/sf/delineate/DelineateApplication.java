@@ -22,44 +22,44 @@ package net.sf.delineate;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 
-import javax.swing.JFrame;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import javax.swing.ActionMap;
+import javax.swing.JComponent;
+import javax.swing.InputMap;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
  * @author robmckinnon@users.sourceforge.net
  */
 public class DelineateApplication {
+    private static final String CONVERT__IMAGE__ACTION = "Convert";
 
     public DelineateApplication(String parameterFile) throws Exception {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
         JFrame frame = new JFrame("Delineate - raster to SVG converter");
-        final SvgViewerController svgViewerController = new SvgViewerController(frame);
+        final SvgViewerController svgViewerController = new SvgViewerController();
 
         JButton button = initDelineateButton(settingsPanel, svgViewerController);
 
         JPanel buttonPanel = new JPanel();
-//        buttonPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
         buttonPanel.add(button);
-//        buttonPanel.add(svgViewerPanel.getViewSourceButton());
-//        buttonPanel.add(svgViewerPanel.getLoadButton());
 
-        JPanel controlPanel = new JPanel(new SpringLayout());
-        controlPanel.add(settingsPanel.getPanel());
-        controlPanel.add(buttonPanel);
-        SpringUtilities.makeCompactGrid(controlPanel, 2, 1, 2, 2, 2, 2);
-        JPanel wrapperPanel = new JPanel();
-        wrapperPanel.add(controlPanel);
+        JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
+//        JMenuBar menuBar = createMenuBar(svgViewerController);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(wrapperPanel, BorderLayout.EAST);
+//        panel.add(menuBar, BorderLayout.NORTH);
+        panel.add(controlPanel, BorderLayout.EAST);
         panel.add(svgViewerController.getSvgViewerPanels());
 
         frame.setContentPane(panel);
@@ -68,9 +68,28 @@ public class DelineateApplication {
         frame.setVisible(true);
     }
 
+//    private JMenuBar createMenuBar(final SvgViewerController svgViewerController) {
+//        JMenuBar menuBar = new JMenuBar();
+//        menuBar.add(svgViewerController.getSvgViewerMenu());
+//        return menuBar;
+//    }
+
+    private JPanel createControlPanel(final SettingsPanel settingsPanel, JPanel buttonPanel) {
+        JPanel controlPanel = new JPanel(new SpringLayout());
+        controlPanel.add(settingsPanel.getPanel());
+        controlPanel.add(buttonPanel);
+        SpringUtilities.makeCompactGrid(controlPanel, 2, 1, 2, 2, 2, 2);
+        JPanel controlWrapperPanel = new JPanel();
+        controlWrapperPanel.add(controlPanel);
+        return controlWrapperPanel;
+    }
+
     private JButton initDelineateButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
-        JButton button = new JButton("Run");
-        button.addActionListener(new ActionListener() {
+        JPanel panel = settingsPanel.getPanel();
+        ActionMap actionMap = panel.getActionMap();
+        InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        actionMap.put(CONVERT__IMAGE__ACTION, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 viewerController.movePreviousSvg();
                 String command = settingsPanel.getCommand();
@@ -85,11 +104,18 @@ public class DelineateApplication {
                 }
             }
         });
+
+        KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        inputMap.put(keyStroke, CONVERT__IMAGE__ACTION);
+
+        JButton button = new JButton(actionMap.get(CONVERT__IMAGE__ACTION));
+        button.setText("Run");
         return button;
     }
 
     public static void main(String args[]) throws Exception {
         new DelineateApplication(args[0]);
     }
+
 
 }

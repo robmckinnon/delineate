@@ -22,12 +22,16 @@ package net.sf.delineate.gui;
 
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.JGVTComponent;
+import org.apache.batik.swing.gvt.Interactor;
+import org.apache.batik.swing.gvt.AbstractPanInteractor;
 
 import javax.swing.Scrollable;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.Container;
 import java.awt.Window;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
 
@@ -53,16 +57,15 @@ public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
     }
 
     /**
-     * Methode return true if component do not need vertical scrollbar-support
-     *         and         false if vertical scrollbar are needed if component
-     * bigger than viewport
+     * Returns true if component do not need vertical scrollbar-support
+     * otherwise false if vertical scrollbar are needed if component bigger than viewport.
      */
     public boolean getScrollableTracksViewportWidth() {
         return false;
     }
 
     /**
-     * Methode return true if component do not need horizontal scrollbar-support
+     * Returns true if component doesn't need horizontal scrollbar-support
      */
     public boolean getScrollableTracksViewportHeight() {
         return false;
@@ -86,7 +89,7 @@ public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
 
     /**
      * This method avoid the problem, that the original methode in CanvasSVGListener
-     * use pack() methode to rearrange the Swing componentes
+     * use pack() methode to rearrange the Swing components
      */
     protected class ScrollableCanvasSVGListener extends JSVGCanvas.CanvasSVGListener {
 
@@ -105,4 +108,20 @@ public class ScrollableJSVGCanvas extends JSVGCanvas implements Scrollable {
         }
 
     }
+
+    /**
+     * An interactor to perform a translation.
+     * <p>Binding: BUTTON1 + SHIFT Key</p>
+     */
+//    protected Interactor panInteractor = new AbstractPanInteractor() {
+//        public boolean startInteraction(InputEvent event) {
+//            int mods = event.getModifiers();
+//            boolean mousePressed = event.getID() == MouseEvent.MOUSE_PRESSED;
+//            boolean firstButton = (mods & InputEvent.BUTTON1_MASK) != 0;
+//            boolean shiftPressed = (mods & InputEvent.ALT_MASK) != 0;
+//
+//            return mousePressed && firstButton && shiftPressed;
+//        }
+//    };
+
 }

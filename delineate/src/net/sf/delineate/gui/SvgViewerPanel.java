@@ -29,16 +29,20 @@ import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
 import org.w3c.dom.svg.SVGDocument;
 
-import javax.swing.JButton;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 
 /**
@@ -47,13 +51,45 @@ import java.io.File;
  */
 public class SvgViewerPanel {
 
+    public static final String VIEW_SOURCE_ACTION = "ViewSource";
+
     private final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
     private final JLabel statusLabel = new JLabel("Ready.");
     private final JLabel sizeLabel = new JLabel("");
-    private ViewSourceAction viewSourceAction = new ViewSourceAction();
+    private JPopupMenu popupMenu = new JPopupMenu();
+    private int modifier;
+    private JScrollBar horizontalScrollBar;
+    private JScrollBar verticalScrollBar;
+    private JPanel viewerPanel;
+    private ActionMap controllerActionMap;
 
-    public SvgViewerPanel(boolean isPreviousResult) {
-        final String resultLabel = isPreviousResult ? "Previous result: " : "Result: ";
+    public SvgViewerPanel(String resultText, int modifier) {
+        this.modifier = modifier;
+        installListeners(resultText);
+        installActions();
+        viewerPanel = createViewerPanel();
+    }
+
+    public JPanel getViewerPanel() {
+        return viewerPanel;
+    }
+
+
+    private void installActions() {
+        InputMap inputMap = svgCanvas.getInputMap();
+        KeyStroke[] keys = inputMap.keys();
+
+        for(int i = 0; i < keys.length; i++) {
+            KeyStroke key = keys[i];
+            inputMap.remove(key);
+        }
+
+        ActionMap actionMap = svgCanvas.getActionMap();
+        actionMap.put(SvgViewerPanel.VIEW_SOURCE_ACTION, new ViewSourceAction());
+    }
+
+    private void installListeners(final String resultText) {
+        svgCanvas.addMouseListener(new PopupListener(popupMenu));
 
         svgCanvas.addSVGDocumentLoaderListener(new
             SVGDocumentLoaderAdapter() {
@@ -74,14 +110,23 @@ public class SvgViewerPanel {
                 statusLabel.setText("Rendering...");
             }
 
+
             public void gvtRenderingCompleted(GVTTreeRendererEvent e) {
                 String uri = svgCanvas.getURI();
                 File file = FileUtilities.getFile(uri);
                 String fileSize = FileUtilities.getFileSize(file);
-                statusLabel.setText(resultLabel + file.getName());
+                statusLabel.setText(resultText + file.getName());
                 sizeLabel.setText(fileSize);
+                ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
+                viewSourceAction.setSvgDocument(svgCanvas.getSVGDocument());
+                viewSourceAction.setLocation(svgCanvas.getX(), svgCanvas.getY());
             }
         });
+
+    }
+
+    public Action getAction(String actionKey) {
+        return svgCanvas.getActionMap().get(actionKey);
     }
 
     public void setURI(String uri) {
@@ -89,60 +134,100 @@ public class SvgViewerPanel {
         svgCanvas.setURI(uri);
     }
 
-    public JPanel getViewerPanel() {
+    public JScrollBar getHorizontalScrollBar() {
+        return horizontalScrollBar;
+    }
+
+    public JScrollBar getVerticalScrollBar() {
+        return verticalScrollBar;
+    }
+
+    public void addAdjustmentListener(AdjustmentListener scrollListener) {
+        horizontalScrollBar.addAdjustmentListener(scrollListener);
+        verticalScrollBar.addAdjustmentListener(scrollListener);
+    }
+
+    private JPanel createViewerPanel() {
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.add(statusLabel, BorderLayout.WEST);
         statusPanel.add(sizeLabel, BorderLayout.EAST);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JScrollPane(svgCanvas));
+        JScrollPane scrollPane = new JScrollPane(svgCanvas);
+
+        horizontalScrollBar = scrollPane.getHorizontalScrollBar();
+        verticalScrollBar = scrollPane.getVerticalScrollBar();
+
+        panel.add(scrollPane);
         panel.add(statusPanel, BorderLayout.SOUTH);
-
-        JMenuItem menuItem = new JMenuItem(viewSourceAction);
-        menuItem.setText("View source");
-        final JPopupMenu popupMenu = new JPopupMenu();
-        popupMenu.add(menuItem);
-
-        MouseListener popupListener = getPopupListener(popupMenu);
-
-        svgCanvas.addMouseListener(popupListener);
 
         return panel;
     }
 
-    private MouseListener getPopupListener(final JPopupMenu popupMenu) {
-        MouseListener popupListener = new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                maybeShowPopup(e);
-            }
-
-            public void mouseReleased(MouseEvent e) {
-                maybeShowPopup(e);
-            }
-
-            private void maybeShowPopup(MouseEvent e) {
-                if(e.isPopupTrigger()) {
-                    SVGDocument svgDocument = svgCanvas.getSVGDocument();
-                    if(svgDocument == null) {
-                        viewSourceAction.setEnabled(false);
-                    } else {
-                        viewSourceAction.setSvgDocument(svgDocument);
-                        viewSourceAction.setLocation(e.getX(), e.getY());
-                        viewSourceAction.setEnabled(true);
-                    }
-
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-        };
-
-        return popupListener;
+    public void addMenuItem(Action action, KeyStroke keyStroke) {
+        JMenuItem menuItem = new JMenuItem(action);
+        menuItem.setText((String)action.getValue(Action.NAME));
+        menuItem.setAccelerator(keyStroke);
+        popupMenu.add(menuItem);
     }
 
-    public JButton getViewSourceButton() {
-        JButton button = new JButton(viewSourceAction);
-        button.setText("View source");
-        return button;
+    public void addSeparator() {
+        popupMenu.addSeparator();
+    }
+
+    public JMenuItem getMenuItem(String text, String actionKey, int shortcutKey) {
+        Action action = getAction(actionKey);
+
+        JMenuItem menuItem = new JMenuItem(action);
+        menuItem.setText(text);
+        KeyStroke keyStroke = KeyStroke.getKeyStroke(shortcutKey, modifier);
+        menuItem.setAccelerator(keyStroke);
+        return menuItem;
+    }
+
+    public void setControllerActionMap(ActionMap controllerActionMap) {
+        this.controllerActionMap = controllerActionMap;
+    }
+
+    private void setActionsEnabled(boolean enabled) {
+        Object[] keys = controllerActionMap.allKeys();
+        for(int i = 0; i < keys.length; i++) {
+            Object key = keys[i];
+            controllerActionMap.get(key).setEnabled(enabled);
+        }
+    }
+
+    private class PopupListener extends MouseAdapter {
+        private JPopupMenu popupMenu;
+
+        public PopupListener(JPopupMenu popupMenu) {
+            this.popupMenu = popupMenu;
+        }
+
+        public void mousePressed(MouseEvent e) {
+            maybeShowPopup(e);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            maybeShowPopup(e);
+        }
+
+        private void maybeShowPopup(MouseEvent e) {
+            if(e.isPopupTrigger()) {
+                SVGDocument svgDocument = svgCanvas.getSVGDocument();
+
+                if(svgDocument == null) {
+                    setActionsEnabled(false);
+                } else {
+                    setActionsEnabled(true);
+                    ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
+                    viewSourceAction.setSvgDocument(svgDocument);
+                    viewSourceAction.setLocation(e.getX(), e.getY());
+                }
+
+                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
     }
 
 }

@@ -53,6 +53,7 @@ public class ViewSourceAction extends AbstractAction {
     }
 
     public void actionPerformed(ActionEvent e) {
+        System.out.println("View source action performed");
         final ParsedURL url = new ParsedURL(svgDocument.getURL());
         final JFrame frame = new JFrame(url.toString());
         final JTextArea textArea = new JTextArea();
