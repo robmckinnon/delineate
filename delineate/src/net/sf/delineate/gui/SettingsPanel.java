@@ -88,31 +88,44 @@ public class SettingsPanel {
         return command.getCommand();// commandTextArea.getText();
     }
 
+    public boolean inputFileExists() {
+        String inputFile = command.getParameterValue("input-file");
+        File file = new File(inputFile);
+
+        return file.isFile();
+    }
+
     public String getOutputFile() {
         return command.getParameterValue("output-file");
     }
 
     public Action getSaveSettingsAction() {
         AbstractAction action = new AbstractAction() {
-                    public void actionPerformed(ActionEvent event) {
-                        Properties properties = new Properties();
-                        properties.setProperty("setting", getCommand());
-                        String settingsFile = "settings.prop";
-                        File file = new File(settingsFile);
-                        try {
-                            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-                            properties.store(outputStream, settingsFile);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
-
+            public void actionPerformed(ActionEvent event) {
+                Properties properties = new Properties();
+                properties.setProperty("setting", getCommand());
+                String settingsFile = "settings.prop";
+                File file = new File(settingsFile);
+                try {
+                    BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
+                    properties.store(outputStream, settingsFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
 
         setKeyBinding(SAVE_SETTINGS_ACTION, KeyEvent.VK_S, KeyEvent.CTRL_MASK, action);
 
         return action;
     }
+
+    public void selectInputTextField() {
+        JTextField textField = (JTextField)fileTextFieldMap.get("input-file");
+        textField.selectAll();
+        textField.requestFocus();
+    }
+
 
     private void setKeyBinding(String actionKey, int key, int modifiers, AbstractAction action) {
         ActionMap actionMap = panel.getActionMap();
@@ -341,6 +354,5 @@ public class SettingsPanel {
         }
         return model;
     }
-
 
 }

@@ -32,6 +32,7 @@ import javax.swing.JComponent;
 import javax.swing.InputMap;
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
+import javax.swing.JOptionPane;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -49,7 +50,7 @@ public class DelineateApplication {
         JFrame frame = new JFrame("Delineate - raster to SVG converter");
         final SvgViewerController svgViewerController = new SvgViewerController();
 
-        JButton button = initDelineateButton(settingsPanel, svgViewerController);
+        JButton button = initConvertButton(frame, settingsPanel, svgViewerController);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
@@ -84,24 +85,14 @@ public class DelineateApplication {
         return controlWrapperPanel;
     }
 
-    private JButton initDelineateButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
+    private JButton initConvertButton(final JFrame frame, final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         JPanel panel = settingsPanel.getPanel();
         ActionMap actionMap = panel.getActionMap();
         InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         actionMap.put(CONVERT__IMAGE__ACTION, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                viewerController.movePreviousSvg();
-                String command = settingsPanel.getCommand();
-
-                try {
-                    Process process = Runtime.getRuntime().exec(command);
-                    process.waitFor();
-                    String outputFile = settingsPanel.getOutputFile();
-                    viewerController.load("file:" + outputFile);
-                } catch(Exception e) {
-                    e.printStackTrace();
-                }
+                convert(settingsPanel, viewerController, frame);
             }
         });
 
@@ -111,6 +102,28 @@ public class DelineateApplication {
         JButton button = new JButton(actionMap.get(CONVERT__IMAGE__ACTION));
         button.setText("Run");
         return button;
+    }
+
+    private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController, final JFrame frame) {
+        if(settingsPanel.inputFileExists()) {
+            viewerController.movePreviousSvg();
+
+            String command = settingsPanel.getCommand();
+
+            try {
+                Process process = Runtime.getRuntime().exec(command);
+                process.waitFor();
+                String outputFile = settingsPanel.getOutputFile();
+                viewerController.load("file:" + outputFile);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            String message = "Input file does not exist.";
+            String title = "Invalid input file";
+            JOptionPane.showMessageDialog(frame, message, title, JOptionPane.PLAIN_MESSAGE);
+            settingsPanel.selectInputTextField();
+        }
     }
 
     public static void main(String args[]) throws Exception {
