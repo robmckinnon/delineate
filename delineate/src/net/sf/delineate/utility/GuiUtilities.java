@@ -25,13 +25,18 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.JOptionPane;
+import javax.swing.JFrame;
 import java.awt.event.KeyEvent;
+import java.awt.EventQueue;
 
 /**
  * GUI helper methods.
  * @author robmckinnon@users.sourceforge.net
  */
 public class GuiUtilities {
+
+    private static JFrame frame;
 
     public static JButton initButton(String text, String actionKey, int shortcutKey, int modifiers, JComponent component, AbstractAction action) {
         setKeyBinding(actionKey, shortcutKey, modifiers, action, component);
@@ -52,6 +57,22 @@ public class GuiUtilities {
         KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
         inputMap.put(keyStroke, actionKey);
         actionMap.put(actionKey, action);
+    }
+
+    public static void showMessageInEventQueue(final String message, final String title) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                showMessage(message, title);
+            }
+        });
+    }
+
+    public static void showMessage(String message, String title) {
+        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.PLAIN_MESSAGE);
+    }
+
+    public static void setFrame(JFrame frame) {
+        GuiUtilities.frame = frame;
     }
 
 }

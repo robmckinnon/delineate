@@ -24,6 +24,7 @@ import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
 import net.sf.delineate.utility.SvgOptimizer;
+import net.sf.delineate.utility.RuntimeUtility;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -32,7 +33,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
@@ -42,10 +42,6 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
@@ -57,6 +53,9 @@ public class DelineateApplication {
     private final SvgViewerController svgViewerController;
 
     public DelineateApplication(String parameterFile) throws Exception {
+        assertAutotraceInstalled();
+        GuiUtilities.setFrame(frame);
+
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
         svgViewerController = new SvgViewerController(new ConversionListener() {
@@ -90,6 +89,20 @@ public class DelineateApplication {
         frame.setBounds(130, 0, 800, 735);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+    }
+
+    private boolean assertAutotraceInstalled() {
+        boolean autotraceInstalled = false;
+        try {
+            String output = RuntimeUtility.getOutput(new String[] {"autotrace", "-version"});
+            System.out.println(output + " is installed.");
+        } catch(Exception e) {
+            e.printStackTrace();
+            GuiUtilities.showMessage("You must install AutoTrace to run conversions.\n" +
+                "See INSTALL.txt file for details.", "AutoTrace not installed");
+            System.exit(0);
+        }
+        return autotraceInstalled;
     }
 
     private JPanel initOptionsPanel(final SvgViewerController viewerController) {
@@ -174,45 +187,23 @@ public class DelineateApplication {
                         String[] commandArray = settingsPanel.getCommandAsArray();
                         System.out.println(settingsPanel.getCommand());
 
-                        Runtime runtime = Runtime.getRuntime();
-                        Process process = runtime.exec(commandArray, null, null);
-                        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                        process.waitFor();
+                        RuntimeUtility.execute(commandArray);
 
-                        if(errorReader.ready()) {
-                            StringBuffer buffer = new StringBuffer(errorReader.readLine());
-                            while(errorReader.ready()) {
-                                buffer.append('\n' + errorReader.readLine());
-                            }
-                            throw new RuntimeException(buffer.toString());
-                        }
-
-                        new BufferedInputStream(process.getErrorStream());
                         svgViewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgViewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
 
                         svgViewerController.load(FileUtilities.getUri(outputFile));
                     } catch(Exception e) {
-                        e.printStackTrace();
-                        if(e instanceof IOException) {
-                            showMessage("You must install AutoTrace to run conversions.\n" +
-                                "See INSTALL.txt file for details.", "AutoTrace not installed");
-                            System.exit(0);
-                        } else {
-                            showMessage("An error occurred, cannot run conversion: \n" + e.getMessage(), "Error");
-                        }
+                        GuiUtilities.showMessage("An error occurred, cannot run conversion: \n"
+                            + e.getMessage(), "Error");
                     }
                 }
             }.start();
 
         } else {
-            showMessage("Input file does not exist.", "Invalid input file");
+            GuiUtilities.showMessage("Input file does not exist.", "Invalid input file");
             settingsPanel.selectInputTextField();
         }
-    }
-
-    public static void showMessage(String message, String title) {
-        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void main(String args[]) throws Exception {

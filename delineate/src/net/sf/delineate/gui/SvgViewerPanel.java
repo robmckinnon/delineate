@@ -60,18 +60,20 @@ public class SvgViewerPanel {
     private final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
     private final JLabel statusLabel = new JLabel(" ");
     private final JLabel sizeLabel = new JLabel("");
-    private JPopupMenu popupMenu = new JPopupMenu();
-    private int modifier;
+    private final ViewSourceAction viewSourceAction = new ViewSourceAction();
+    private final JPopupMenu popupMenu = new JPopupMenu();
+    private final SvgOptimizer optimizer = new SvgOptimizer();
+
+    private DelineateApplication.ConversionListener listener;
     private JScrollBar horizontalScrollBar;
     private JScrollBar verticalScrollBar;
     private JPanel viewerPanel;
     private ActionMap controllerActionMap;
-    private final ViewSourceAction viewSourceAction = new ViewSourceAction();
     private String uri;
-    private int pathCount = 0;
-    private DelineateApplication.ConversionListener listener;
+
     private boolean optimize = false;
-    private SvgOptimizer optimizer = new SvgOptimizer();
+    private int pathCount = 0;
+    private int modifier;
 
     public SvgViewerPanel(String resultText, int modifier) {
         this.modifier = modifier;
@@ -158,8 +160,8 @@ public class SvgViewerPanel {
             }
 
             private void finishConversion(File file, String resultText) {
-                ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
                 viewSourceAction.setSourceUrl(uri);
+
                 Container ancestor = svgCanvas.getTopLevelAncestor();
                 int top = ancestor.getInsets().top;
                 viewSourceAction.setLocation(ancestor.getX() + (top / 2), ancestor.getY() + top);
@@ -174,7 +176,7 @@ public class SvgViewerPanel {
             }
         });
 
-    }
+     }
 
     public void setStatus(String text) {
         statusLabel.setText(text);
