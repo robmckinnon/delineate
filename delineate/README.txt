@@ -28,19 +28,28 @@ Change Log
 
 From 0.2 to 0.3
 
-- Reduced output file sizes, by changing SVG produced by AutoTrace to be
-  more concise.
+- Improved handling of background colour settings:
+  - Background colour button now brings up a colour palette displaying
+    colours contained in the last SVG result.
+  - If background colour setting is on, Delineate now adds a rect
+    element to SVG produced by AutoTrace, in order to set the specified
+    background colour on the image.
+  - A background colour history is available via a combo box list.
+
+- Reduced output file sizes, by changing SVG produced by AutoTrace:
   - Use single 'g' element to set stroke=none for all paths.
   - Use 'fill' attribute instead of 'style' attribute in paths.
   - Remove the last unneeded "line to" command in each path.
   
   For example SVG from AutoTrace like this:
+  
   <svg width="350" height="318">
   <path style="fill:#ded6aa; stroke:none;" d="M11 0L11 9L12 9L11 0z"/>
   <path style="fill:#685a37; stroke:none;" d="M12 0L2 12L13 12L12 0z"/>
   </svg>
   
   Is converted by Delineate to this:
+  
   <svg width="350" height="318">
   <g stroke="none">
   <path fill="#ded6aa" d="M11 0L11 9L12 9z"/>
@@ -50,9 +59,9 @@ From 0.2 to 0.3
 
 - Optionally SVG style definitions can be created in the result SVG.
   This may reduce file size further when there are many paths and a
-  limited number of colors.
+  limited number of colours. For example, if create styles is turned on,
+  Delineate would change the above SVG to:
   
-  For example, if turned on, the SVG above would become:
   <svg width="350" height="318">
   <g stroke="none">
   <path class="a" d="M11 0L11 9L12 9z"/>
@@ -65,14 +74,16 @@ From 0.2 to 0.3
   ]]></style>
   </defs>
   </svg>
-   
+  
 - Split panes now allow the previous result view and/or the settings
   panel to be hidden.
 - Can see the number of paths in result SVG, next to the file size in
   the status bars.
-- Put zoom in onto the popup menu, it was meant to be there in v0.2.
+- Put 'zoom in' action onto the popup menu, it was meant to be there in
+  the last release.
 - Fixed bug that occurred when trying to convert when a view source
-  dialog was open.
+  window was open.
+- Now close view source windows when a new conversion is performed.
 - Display warning dialog if trying to convert when autotrace is not
   installed.
 
@@ -85,4 +96,4 @@ From 0.1 to 0.2
 - Status bar for each of the two SVG result panels.
 - File sizes are displayed.
 - File browser dialog for input and output file selection.
-- Color chooser dialog for background color selection.
+- Colour chooser dialog for background colour selection.
