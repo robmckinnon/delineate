@@ -4,16 +4,16 @@
   <parameter>
     <name>background-color</name>
     <optional>true</optional>
-    <enabled>false</enabled>
+    <enabled>true</enabled>
     <default>FFFFFF</default>
-    <description>the color of the background that should be ignored, for example FFFFFF; default is no background color.</description>
+    <description>Background color for the result SVG, for example FFFFFF. No SVG paths are drawn in the background color.</description>
   </parameter>
 
   <parameter>
     <name>centerline</name>
     <optional>true</optional>
     <enabled>false</enabled>
-    <description>Trace a character's centerline, rather than its outline.</description>
+    <description>Trace a region's centerline, rather than its outline.</description>
   </parameter>
 
   <parameter>
@@ -23,11 +23,11 @@
     <default>256</default>
     <range>
       <use-whole-numbers>true</use-whole-numbers>
-      <min>2</min>
+      <min>1</min>
       <max>256</max>
       <step>1</step>
     </range>
-    <description>Number of colors a color bitmap is reduced to, it does not work on gray scale, allowed are 1..256; default is 0, that means no color reduction is done.</description>
+    <description>Limit SVG paths to use this many colors, it does not work on gray scale, allowed are 1 to 256.</description>
   </parameter>
 
   <parameter>
@@ -80,7 +80,7 @@
       <max>20</max>
       <step>1</step>
     </range>
-    <description>0..20; default is no despeckling.</description>
+    <description>0..20; default is 10.</description>
   </parameter>
 
   <parameter>
@@ -195,7 +195,7 @@
     <name>output-file</name>
     <optional>false</optional>
     <default>./img/walk.svg</default>
-    <description>write to filename</description>
+    <description>Ouput filename.</description>
   </parameter>
 <!--
   <parameter>
@@ -211,14 +211,14 @@ swf, emf, mif, er, dxf, epd, pdf, cgm or dr2d can be used.</description>
     <name>preserve-width</name>
     <optional>true</optional>
     <enabled>false</enabled>
-    <description>whether to preserve line width prior to thinning.</description>
+    <description>Whether to preserve line width prior to thinning.</description>
   </parameter>
 
   <parameter>
     <name>remove-adjacent-corners</name>
     <optional>true</optional>
     <enabled>false</enabled>
-    <description>remove corners that are adjacent.</description>
+    <description>Remove corners that are adjacent.</description>
   </parameter>
 
   <parameter>
