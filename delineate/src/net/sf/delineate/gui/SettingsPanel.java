@@ -24,7 +24,7 @@ import net.sf.delineate.command.Parameter;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
 import net.sf.delineate.utility.XPathTool;
-import org.xml.sax.SAXException;
+import net.sf.delineate.utility.SettingUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -42,7 +42,6 @@ import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -52,9 +51,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Controls user defined settings.
@@ -74,7 +73,6 @@ public class SettingsPanel implements RenderingListener {
     private final JPanel panel;
     private Command command;
     private ColorEditor colorEditor;
-
 
     private final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -99,11 +97,11 @@ public class SettingsPanel implements RenderingListener {
     };
 
 
-
-    public SettingsPanel(String parameterFile) throws Exception {
+    public SettingsPanel(XPathTool xpathTool) throws Exception {
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Conversion settings"));
-        panel.add(initContentPane(parameterFile), BorderLayout.NORTH);
+
+        panel.add(initContentPane(xpathTool), BorderLayout.NORTH);
 
         SaveSettingsPanel saveSettingsPanel = new SaveSettingsPanel(command);
 
@@ -130,11 +128,10 @@ public class SettingsPanel implements RenderingListener {
         }
     }
 
-    public boolean inputFileExists() {
+    public File getInputFile() {
         String inputFile = command.getParameterValue(Command.INPUT_FILE_PARAMETER);
         File file = new File(inputFile);
-
-        return file.isFile();
+        return file;
     }
 
     public String getOutputFile() {
@@ -152,15 +149,16 @@ public class SettingsPanel implements RenderingListener {
         setFileSizeText(Command.OUTPUT_FILE_PARAMETER, file);
     }
 
-    private JPanel initContentPane(String parameterFile) throws ParserConfigurationException, IOException, SAXException, TransformerException {
+    private JPanel initContentPane(XPathTool xpathTool) throws TransformerException {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setLayout(new SpringLayout());
+        String commandName = xpathTool.string("/parameters/command/name");
+        String optionIndicator = xpathTool.string("/parameters/command/option-indicator");
 
-        XPathTool xpath = new XPathTool(new File(parameterFile));
+        int descriptionCount = xpathTool.count("/parameters/parameter/description");
+        int parameterCount = xpathTool.count("/parameters/parameter");
 
-        int parameterCount = xpath.count("/parameters/parameter");
-
-        command = new Command(parameterCount, new Command.CommandChangeListener() {
+        command = new Command(commandName, optionIndicator, parameterCount, new Command.CommandChangeListener() {
             public void enabledChanged(Parameter parameter) {
                 String name = parameter.getName();
                 JCheckBox checkBox = (JCheckBox)checkBoxMap.get(name);
@@ -187,33 +185,71 @@ public class SettingsPanel implements RenderingListener {
             }
         });
 
+        addTracingApplicationPathControls(commandName, panel);
+
         for(int type = 0; type < 3; type++) {
             for(int i = 0; i < parameterCount; i++) {
                 String xpathPrefix = "/parameters/parameter[" + (i + 1) + "]/";
-                xpath.setXpathPrefix(xpathPrefix);
-                String name = xpath.string("name");
+                xpathTool.setXpathPrefix(xpathPrefix);
+                String name = xpathTool.string("name");
                 boolean isFileParameter = name.endsWith("file");
-                boolean isNumberParameter = xpath.count("range") == 1;
+                boolean isNumberParameter = xpathTool.count("range") == 1;
 
                 switch(type) {
                     case 0:
                         if(isFileParameter)
-                            addParameter(panel, xpath, xpathPrefix, name);
+                            addParameter(panel, xpathTool, xpathPrefix, name);
                         break;
                     case 1:
                         if(!isFileParameter && !isNumberParameter)
-                            addParameter(panel, xpath, xpathPrefix, name);
+                            addParameter(panel, xpathTool, xpathPrefix, name);
                         break;
                     case 2:
                         if(!isFileParameter && isNumberParameter)
-                            addParameter(panel, xpath, xpathPrefix, name);
+                            addParameter(panel, xpathTool, xpathPrefix, name);
                         break;
                 }
             }
         }
 
-        SpringUtilities.makeCompactGrid(panel, parameterCount, 2, 6, 6, 6, 6);
+        SpringUtilities.makeCompactGrid(panel, descriptionCount + 1, 2, 6, 6, 6, 6);
         return panel;
+    }
+
+    private void addTracingApplicationPathControls(final String commandName, final JPanel panel) {
+        final JTextField textField = new JTextField("Set path before use");
+        textField.setEditable(false);
+
+        final String fileName = "settings.prop";
+        Properties properties = SettingUtilities.loadProperties(fileName, panel);
+        String commandPath = properties.getProperty(commandName);
+        if(commandPath != null) {
+            command.setTracingApplication(commandPath);
+            textField.setText(commandPath);
+        }
+
+        JButton button = new JButton(new AbstractAction() {
+            JFileChooser fileChooser = new JFileChooser();
+
+            public void actionPerformed(ActionEvent e) {
+                int response = fileChooser.showOpenDialog((JComponent)e.getSource());
+
+                if(response == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    String commandPath = file.getPath();
+                    textField.setText(commandPath);
+                    command.setTracingApplication(commandPath);
+                    Properties properties = SettingUtilities.loadProperties(fileName, panel);
+                    properties.setProperty(commandName, commandPath);
+                    SettingUtilities.saveProperties(properties, fileName, "Delineate tracing application settings - http//delineate.sourceforge.net");
+                }
+            }
+        });
+        button.setText("Path to " + commandName);
+        JPanel panel2 = new JPanel(new BorderLayout());
+        panel2.add(button, BorderLayout.WEST);
+        panel.add(panel2);
+        panel.add(textField);
     }
 
     private void addParameter(JPanel panel, XPathTool xpath, String xpathPrefix, String name) throws TransformerException {
@@ -222,14 +258,19 @@ public class SettingsPanel implements RenderingListener {
 
         String value = xpath.string("default");
         String desc = xpath.string("description");
-        command.addParameter(name, enabled, value);
+        String function = xpath.string("function");
+        command.addParameter(name, enabled, value, function);
+
+        if(desc.length() == 0) {
+            return;
+        }
 
         JComponent labelPanel = null;
         JComponent controlComponent = null;
 
         if(xpath.count("range") != 1) {
-            labelPanel = initLabelPanel(optional, enabled, null, desc, name);
-            controlComponent = initControlComponent(value, name, enabled);
+            labelPanel = initLabelPanel(optional, enabled, null, desc, name, function);
+            controlComponent = initControlComponent(name, value, enabled, null);
         } else {
             xpath.setXpathPrefix(xpathPrefix + "range/");
             boolean useWholeNumbers = xpath.toBoolean("use-whole-numbers");
@@ -238,7 +279,7 @@ public class SettingsPanel implements RenderingListener {
             SpinnerNumberModel model = initSpinnerModel(useWholeNumbers, xpath, value);
             SpinnerSlider spinnerSlider = initSpinnerSlider(model, name, enabled, desc, useWholeNumbers, stepString);
 
-            labelPanel = initLabelPanel(optional, enabled, spinnerSlider, desc, name);
+            labelPanel = initLabelPanel(optional, enabled, spinnerSlider, desc, name, function);
             controlComponent = initControlPanel(spinnerSlider);
         }
 
@@ -246,7 +287,7 @@ public class SettingsPanel implements RenderingListener {
         panel.add(controlComponent);
     }
 
-    private JComponent initControlComponent(String value, String name, boolean enabled) {
+    private JComponent initControlComponent(String name, String value, boolean enabled, String function) {
         if(value.length() > 0) {
             if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
                 colorEditor = new ColorEditor(command, value, panel, enabled);
@@ -257,6 +298,9 @@ public class SettingsPanel implements RenderingListener {
                 textField.setName(name);
                 textField.setColumns(15);
                 textField.addKeyListener(textFieldKeyListener);
+                if(function != null) {
+                    textFieldMap.put(function, textField);
+                }
                 textFieldMap.put(name, textField);
 
                 return textField;
@@ -294,9 +338,9 @@ public class SettingsPanel implements RenderingListener {
         return spinnerSlider;
     }
 
-    private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, final String name) {
+    private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, final String name, String function) {
         String labelName = name.replace('-', ' ');
-        boolean isFileParameter = name.endsWith("file");
+        boolean isFileParameter = function.equals(Command.INPUT_FILE_PARAMETER) || function.equals(Command.OUTPUT_FILE_PARAMETER);
         boolean isBgColorParameter = name.equals(Command.BACKGROUND_COLOR_PARAMETER);
         final JPanel panel = new JPanel(new BorderLayout());
         Component labelComponent = null;
@@ -310,7 +354,7 @@ public class SettingsPanel implements RenderingListener {
             button = initColorChooserButton(labelName, enabled);
             labelComponent = button;
         } else if(isFileParameter) {
-            labelComponent = initFileChooserButton(name, labelName);
+            labelComponent = initFileChooserButton(name, labelName, function);
         }
 
         panel.add(labelComponent, BorderLayout.WEST);
@@ -320,7 +364,7 @@ public class SettingsPanel implements RenderingListener {
             panel.add(checkBox, BorderLayout.EAST);
         } else if(isFileParameter) {
             JLabel label = new JLabel();
-            fileSizeLabelMap.put(name, label);
+            fileSizeLabelMap.put(function, label);
             panel.add(label, BorderLayout.EAST);
         }
 
@@ -341,7 +385,7 @@ public class SettingsPanel implements RenderingListener {
         return button;
     }
 
-    private JButton initFileChooserButton(final String name, String labelName) {
+    private JButton initFileChooserButton(final String name, String labelName, String function) {
         AbstractAction action = new AbstractAction() {
             JFileChooser fileChooser = new JFileChooser();
 
@@ -361,9 +405,9 @@ public class SettingsPanel implements RenderingListener {
 
         JButton button = null;
 
-        if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+        if(function.equals(Command.INPUT_FILE_PARAMETER)) {
             button = GuiUtilities.initButton(labelName, INPUT_FILE_ACTION, KeyEvent.VK_I, panel, action);
-        } else if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+        } else if(function.equals(Command.OUTPUT_FILE_PARAMETER)) {
             button = GuiUtilities.initButton(labelName, OUTPUT_FILE_ACTION, KeyEvent.VK_O, panel, action);
         }
 
@@ -434,7 +478,9 @@ public class SettingsPanel implements RenderingListener {
     }
 
     public void setColors(Color[] colors) {
-        colorEditor.setColors(colors);
+        if(colorEditor != null && colors != null) {
+            colorEditor.setColors(colors);
+        }
     }
 
     public boolean getCenterlineEnabled() {
@@ -443,6 +489,10 @@ public class SettingsPanel implements RenderingListener {
 
     public String[] getCommandAsArray() {
         return command.getCommandAsArray();
+    }
+
+    public String getCommandName() {
+        return command.getCommandName();
     }
 
 }

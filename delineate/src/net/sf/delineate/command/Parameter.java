@@ -23,20 +23,38 @@ import net.sf.delineate.utility.FileUtilities;
 
 
 /**
- * Represents a Autotrace command parameter.
+ * Represents a tracing tool command parameter.
  * @author robmckinnon@users.sourceforge.net
  */
 public class Parameter implements Comparable {
-    String name;
-    boolean enabled;
-    String defaultValue;
-    String value;
+    private String function;
+    private String name;
+    private boolean enabled;
+    private String defaultValue;
+    private String value;
 
-    public Parameter(String name, boolean enabled, String value) {
+    public Parameter(String name, boolean enabled, String value, String function) {
         this.name = name;
         this.enabled = enabled;
         this.defaultValue = value;
         this.value = value;
+        this.function = function;
+    }
+
+    public boolean isInputFileParameter() {
+        return function.equals(Command.INPUT_FILE_PARAMETER);
+    }
+
+    public boolean isOutputFileParameter() {
+        return function.equals(Command.OUTPUT_FILE_PARAMETER);
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public String getFunction() {
+        return function;
     }
 
     public String getName() {
@@ -51,14 +69,34 @@ public class Parameter implements Comparable {
         return value;
     }
 
-    public String parameterSetting() {
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setFunction(String function) {
+        this.function = function;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public String parameterSetting(String optionIndicator) {
         if(enabled) {
             String settingValue = value;
-            if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+            if(isInputFileParameter()) {
                 return FileUtilities.normalizeFileName(value);
             } else {
-                String option = '-' + name + ' ';
-                if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+                String option = optionIndicator + name + ' ';
+                if(isOutputFileParameter()) {
                     settingValue = FileUtilities.normalizeFileName(value);
                 }
                 return (value.length() == 0) ? option : option + settingValue + ' ';
@@ -68,9 +106,9 @@ public class Parameter implements Comparable {
         }
     }
 
-    public String parameterOption() {
-        if(enabled && !name.equals(Command.INPUT_FILE_PARAMETER)) {
-            String option = '-' + name;
+    public String parameterOption(String optionIndicator) {
+        if(enabled && !isInputFileParameter()) {
+            String option = optionIndicator + name;
             return option;
         } else {
             return "";
@@ -80,10 +118,10 @@ public class Parameter implements Comparable {
     public String parameterOptionValue() {
         if(enabled) {
             String settingValue = value;
-            if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+            if(isInputFileParameter()) {
                 return value;
             } else {
-                if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+                if(isOutputFileParameter()) {
                     settingValue = value;
                 }
                 return (value.length() == 0) ? "" : settingValue;

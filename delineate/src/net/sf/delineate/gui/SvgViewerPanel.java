@@ -63,7 +63,7 @@ public class SvgViewerPanel {
     private final JLabel sizeLabel = new JLabel("");
     private final ViewSourceAction viewSourceAction = new ViewSourceAction();
     private final JPopupMenu popupMenu = new JPopupMenu();
-    private final SvgOptimizer optimizer = new SvgOptimizer();
+    private SvgOptimizer svgOptimizer;
 
     private List renderingListenerList = new ArrayList();
     private JScrollBar horizontalScrollBar;
@@ -87,6 +87,13 @@ public class SvgViewerPanel {
         return viewerPanel;
     }
 
+    public void setSvgOptimizer(SvgOptimizer svgOptimizer) {
+        this.svgOptimizer = svgOptimizer;
+    }
+
+    private SvgOptimizer getSvgOptimizer() {
+        return svgOptimizer;
+    }
 
     public void closeViewSourceFrame() {
         viewSourceAction.closeFrame();
@@ -125,12 +132,13 @@ public class SvgViewerPanel {
                 }
 
                 public void documentLoadingCompleted(SVGDocumentLoaderEvent e) {
-                    optimizer.setBackground(e.getSVGDocument());
+                    getSvgOptimizer().addBackground(e.getSVGDocument());
+                    getSvgOptimizer().adjustDimensions(e.getSVGDocument());
 
                     if(optimize) {
                         optimize();
 
-                        if(optimizer.colorGroups()) {
+                        if(getSvgOptimizer().groupByColor()) {
                             svgCanvas.stopProcessing();
                             EventQueue.invokeLater(new Runnable() {
                                 public void run() {
@@ -166,14 +174,14 @@ public class SvgViewerPanel {
 
     private void optimize() {
         File file = FileUtilities.getFile(uri);
-        optimizer.optimize(file, getSvgDocument());
+        getSvgOptimizer().optimize(file, getSvgDocument());
 
         for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
             RenderingListener renderingListener = (RenderingListener)iterator.next();
-            renderingListener.setColors(optimizer.getColors());
+            renderingListener.setColors(getSvgOptimizer().getColors());
         }
 
-        setPathCount(optimizer.getPathCount());
+        setPathCount(getSvgOptimizer().getPathCount());
         optimize = false;
     }
 
@@ -298,18 +306,6 @@ public class SvgViewerPanel {
 
     public void setOptimize(boolean optimize) {
         this.optimize = optimize;
-    }
-
-    public void setBackgroundColor(String color) {
-        optimizer.setBackgroundColor(color);
-    }
-
-    public void setCenterlineEnabled(boolean enabled) {
-        optimizer.setCenterlineEnabled(enabled);
-    }
-
-    public void setOptimizeType(String optimizeType) {
-        optimizer.setOptimizeType(optimizeType);
     }
 
     private class PopupListener extends MouseAdapter {

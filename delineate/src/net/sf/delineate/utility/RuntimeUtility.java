@@ -40,7 +40,10 @@ public class RuntimeUtility {
             while(errorReader.ready()) {
                 buffer.append('\n' + errorReader.readLine());
             }
-            throw new RuntimeException(buffer.toString());
+            String message = buffer.toString();
+            if(message.indexOf("premature end of file") == -1) {
+                throw new RuntimeException(message);
+            }
         }
     }
 

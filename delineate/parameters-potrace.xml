@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<parameters>
+
+  <command>
+    <name>potrace</name>
+    <label>potrace</label>
+    <description>for converting black and white images</description>
+    <option-indicator>--</option-indicator>
+    <svg-optimizer>net.sf.delineate.utility.PotraceSvgOptimizer</svg-optimizer>
+  </command>
+
+  <parameter>
+    <name>svg</name>
+    <optional>false</optional>
+  </parameter>
+
+  <parameter>
+    <function>input-file</function>
+    <name>input-file</name>
+    <optional>false</optional>
+    <default>./img/walk.bmp</default>
+    <description>Input filename.</description>
+  </parameter>
+
+  <parameter>
+    <function>output-file</function>
+    <name>output</name>
+    <optional>false</optional>
+    <default>./img/walk.svg</default>
+    <description>Ouput filename.</description>
+  </parameter>
+
+</parameters>
+

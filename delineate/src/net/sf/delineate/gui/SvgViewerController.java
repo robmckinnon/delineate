@@ -20,6 +20,7 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
+import net.sf.delineate.utility.SvgOptimizer;
 import org.apache.batik.swing.JSVGCanvas;
 import org.w3c.dom.Document;
 import org.w3c.dom.svg.SVGDocument;
@@ -231,16 +232,8 @@ public class SvgViewerController {
         return svgViewerA.getSvgDocument();
     }
 
-    public void setBackgroundColor(String color) {
-        svgViewerA.setBackgroundColor(color);
-    }
-
-    public void setCenterlineEnabled(boolean centerlineEnabled) {
-        svgViewerA.setCenterlineEnabled(centerlineEnabled);
-    }
-
-    public void setOptimizeType(String optimizeType) {
-        svgViewerA.setOptimizeType(optimizeType);
+    public void setSvgOptimizer(SvgOptimizer svgOptimizer) {
+        svgViewerA.setSvgOptimizer(svgOptimizer);
     }
 
     private class ScrollListener implements AdjustmentListener {

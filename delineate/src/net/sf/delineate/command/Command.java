@@ -19,38 +19,56 @@
  */
 package net.sf.delineate.command;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
- * Represents Autotrace command.
+ * Represents tracing tool command.
  * @author robmckinnon@users.sourceforge.net
  */
 public class Command {
 
-    private CommandChangeListener changeListener;
-    private Parameter[] parameters;
-    int parameterCount = 0;
     public static final String INPUT_FILE_PARAMETER = "input-file";
     public static final String OUTPUT_FILE_PARAMETER = "output-file";
     public static final String BACKGROUND_COLOR_PARAMETER = "background-color";
     public static final String CENTERLINE_PARAMETER = "centerline";
 
-    public Command(int totalParameterCount, CommandChangeListener listener) {
+    private CommandChangeListener changeListener;
+    private String commandName;
+    private String tracingApplication;
+    private String optionIndicator = "-";
+
+    private Parameter[] parameters;
+
+    /** key is function or name, value is parameter */
+    private Map parameterMap = new HashMap();
+
+    int parameterCount = 0;
+
+    public Command(String commandName, String optionIndicator, int totalParameterCount, CommandChangeListener listener) {
+        this.optionIndicator = optionIndicator;
         parameters = new Parameter[totalParameterCount];
         changeListener = listener;
+        this.commandName = commandName;
     }
 
-    public void addParameter(String name, boolean enabled, String value) {
+    public String getCommandName() {
+        return commandName;
+    }
+
+    public void addParameter(String name, boolean enabled, String value, String function) {
         if(parameterCount == parameters.length) {
             throw new IllegalStateException("Command can only hold " + parameters.length + " parameters.");
         }
 
-        Parameter parameter = new Parameter(name, enabled, value);
+        Parameter parameter = new Parameter(name, enabled, value, function);
         parameters[parameterCount] = parameter;
         parameterCount++;
+
+        if(function.length() > 0) {
+            parameterMap.put(function, parameter);
+        }
+
+        parameterMap.put(name, parameter);
 
         if(parameterCount == parameters.length) {
             Arrays.sort(parameters);
@@ -60,8 +78,8 @@ public class Command {
     public void setParameterEnabled(String name, boolean enabled, boolean notify) {
         Parameter parameter = getParameter(name);
 
-        if(parameter.enabled != enabled) {
-            parameter.enabled = enabled;
+        if(parameter.isEnabled() != enabled) {
+            parameter.setEnabled(enabled);
         }
         if(notify) {
             changeListener.enabledChanged(parameter);
@@ -71,11 +89,11 @@ public class Command {
     public void setParameterValue(String name, String value, boolean notify) {
         Parameter parameter = getParameter(name);
 
-        if(!parameter.value.equals(value)) {
+        if(!parameter.getValue().equals(value)) {
 //            if(name.equals(Command.INPUT_FILE_PARAMETER) || name.equals(Command.OUTPUT_FILE_PARAMETER)) {
 //                value = FileUtilities.normalizeFileName(value);
 //            }
-            parameter.value = value;
+            parameter.setValue(value);
 
             if(notify) {
                 changeListener.valueChanged(parameter);
@@ -84,10 +102,10 @@ public class Command {
     }
 
     public String getCommand() {
-        StringBuffer buffer = new StringBuffer("autotrace ");
+        StringBuffer buffer = new StringBuffer(tracingApplication + " ");
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            String parameterSetting = parameter.parameterSetting();
+            String parameterSetting = parameter.parameterSetting(optionIndicator);
             buffer.append(parameterSetting);
         }
         String command =  buffer.toString();
@@ -97,11 +115,11 @@ public class Command {
     public String[] getCommandAsArray() {
         List commandList = new ArrayList();
 
-        commandList.add("autotrace");
+        commandList.add(tracingApplication);
 
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            String option = parameter.parameterOption();
+            String option = parameter.parameterOption(optionIndicator);
 
             if(option.length() > 0) {
                 commandList.add(option);
@@ -118,29 +136,35 @@ public class Command {
     }
 
     private Parameter getParameter(String name) {
-        if(name.equals(INPUT_FILE_PARAMETER)) {
-            return parameters[parameters.length -1];
-        } else {
-            int index = Arrays.binarySearch(parameters, name);
-            Parameter parameter = parameters[index];
-            return parameter;
-        }
+        return (Parameter)parameterMap.get(name);
+//        if(name.startsWith("input")) {
+//            return parameters[parameters.length - 1];
+//        } else {
+//            int index = Arrays.binarySearch(parameters, name);
+//            Parameter parameter = parameters[index];
+//            return parameter;
+//        }
     }
 
     public boolean getParameterEnabled(String name) {
-        return getParameter(name).enabled;
+        Parameter parameter = getParameter(name);
+        if(parameter == null) {
+            return false;
+        } else {
+            return parameter.isEnabled();
+        }
     }
 
     public String getParameterValue(String name) {
-        return getParameter(name).value;
+        return getParameter(name).getValue();
     }
 
     public void setCommandDefaultValues() {
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            String name = parameter.getName();
-            if(!name.equals(INPUT_FILE_PARAMETER) && !name.equals(OUTPUT_FILE_PARAMETER)) {
-                setParameterValue(name, parameter.defaultValue, true);
+
+            if(!parameter.isInputFileParameter() && !parameter.isOutputFileParameter()) {
+                setParameterValue(parameter.getName(), parameter.getDefaultValue(), true);
             }
         }
     }
@@ -148,9 +172,9 @@ public class Command {
     public void setCommand(String command) {
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            String name = parameter.getName();
-            if(!name.equals(INPUT_FILE_PARAMETER)) {
-                setParameterEnabled(name, false, true);
+
+            if(!parameter.isInputFileParameter()) {
+                setParameterEnabled(parameter.getName(), false, true);
             }
         }
 
@@ -158,13 +182,13 @@ public class Command {
         tokenizer.nextToken();
         String name = tokenizer.nextToken();
         while(tokenizer.hasMoreTokens()) {
-            if(name.charAt(0) == '-') {
-                name = name.substring(1);
+            if(name.startsWith(optionIndicator)) {
+                name = name.substring(optionIndicator.length());
                 setParameterEnabled(name, true, true);
 
                 String value = tokenizer.nextToken();
                 if(value.charAt(0) != '-') {
-                    if(!name.equals(OUTPUT_FILE_PARAMETER)) {
+                    if(!getParameter(name).isOutputFileParameter()) {
                         setParameterValue(name, value, true);
                     }
 
@@ -183,6 +207,10 @@ public class Command {
                 name += ' ' + tokenizer.nextToken();
             }
         }
+    }
+
+    public void setTracingApplication(String path) {
+        this.tracingApplication = path;
     }
 
     /**

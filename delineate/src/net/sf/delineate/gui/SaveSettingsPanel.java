@@ -21,25 +21,14 @@ package net.sf.delineate.gui;
 
 import net.sf.delineate.command.Command;
 import net.sf.delineate.utility.GuiUtilities;
+import net.sf.delineate.utility.SettingUtilities;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import java.awt.Dimension;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
@@ -94,7 +83,7 @@ public class SaveSettingsPanel {
             } else {
                 boolean isNewSavedSetting = savedSettings.getProperty(name) == null;
                 savedSettings.setProperty(name, command.getCommand());
-                saveProperties(savedSettings);
+                SettingUtilities.saveProperties(savedSettings, getSettingsFileName(), getSettingsHeader());
 
                 if(isNewSavedSetting) {
                     loadSettingsCombo.addItem(name);
@@ -116,7 +105,7 @@ public class SaveSettingsPanel {
 
         if(response == JOptionPane.YES_OPTION) {
             savedSettings.remove(settingName);
-            saveProperties(savedSettings);
+            SettingUtilities.saveProperties(savedSettings, getSettingsFileName(), getSettingsHeader());
             loadSettingsCombo.removeItem(settingName);
             loadSettingsCombo.setSelectedItem(DELETE_SETTINGS_ACTION);
         }
@@ -155,18 +144,8 @@ public class SaveSettingsPanel {
         });
     }
 
-    private void saveProperties(Properties properties) {
-        File file = getSettingsFile();
-        try {
-            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-            properties.store(outputStream, "Delineate command settings for AutoTrace invocation - http//delineate.sourceforge.net");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private JComboBox initLoadSettingsCombo() {
-        savedSettings = loadProperties();
+        savedSettings = SettingUtilities.loadProperties(getSettingsFileName(), panel);
         savedSettings.setProperty(DEFAULT_SETTING_NAME, command.getCommand());
 
         Set keySet = savedSettings.keySet();
@@ -209,33 +188,12 @@ public class SaveSettingsPanel {
         }
     }
 
-    private Properties loadProperties() {
-        File file = getSettingsFile();
-
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this.panel, "Cannot create settings.prop file: " + e.getMessage(), "Error", JOptionPane.PLAIN_MESSAGE);
-            }
-        }
-
-        Properties properties = new Properties();
-
-        try {
-            BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
-            properties.load(inStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return properties;
+    private String getSettingsFileName() {
+        return "settings-" + command.getCommandName() + ".prop";
     }
 
-    private File getSettingsFile() {
-        String settingsFile = "settings.prop";
-        File file = new File(settingsFile);
-        return file;
+    private String getSettingsHeader() {
+        return "Delineate command settings for " + command.getCommandName() + " invocation - http//delineate.sourceforge.net";
     }
 
 }

@@ -22,31 +22,23 @@ package net.sf.delineate;
 import net.sf.delineate.gui.RenderingListener;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
-import net.sf.delineate.utility.FileUtilities;
-import net.sf.delineate.utility.GuiUtilities;
-import net.sf.delineate.utility.RuntimeUtility;
-import net.sf.delineate.utility.SvgOptimizer;
+import net.sf.delineate.utility.*;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JSplitPane;
-import javax.swing.SpringLayout;
-import javax.swing.SpringUtilities;
-import java.awt.Color;
-import java.awt.Cursor;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.io.File;
+import java.io.IOException;
+
+import org.xml.sax.SAXException;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
@@ -56,33 +48,27 @@ public class DelineateApplication {
     public static final String CONVERT_IMAGE_ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
     private final SvgViewerController svgViewerController;
-    private JPanel convertPanel;
+    private List convertPanelList = new ArrayList(5);
 
-    public DelineateApplication(String parameterFile) throws Exception {
-        assertAutotraceInstalled();
+    public DelineateApplication(String autotraceParameterFile, String potraceParameterFile) throws Exception {
         GuiUtilities.setFrame(frame);
 
-        final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
+        svgViewerController = initSvgViewerController();
 
-        svgViewerController = initSvgViewerController(settingsPanel);
-
-        JPanel optionsPanel = initOptionsPanel(svgViewerController);
-
-        convertPanel = new JPanel();
-        JButton button = initConvertButton(convertPanel, settingsPanel);
-        convertPanel.add(button);
-
-        JPanel controlPanel = createControlPanel(settingsPanel, convertPanel, optionsPanel);
+        JTabbedPane tabbedPane = new JTabbedPane();
+        addControlTab(autotraceParameterFile, tabbedPane, true);
+        addControlTab(potraceParameterFile, tabbedPane, false);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, svgViewerController.getSvgViewerPanels(), controlPanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                svgViewerController.getSvgViewerPanels(), tabbedPane);
         splitPane.setOneTouchExpandable(true);
         splitPane.setResizeWeight(1);
 
         frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 0, 800, 735);
+        frame.setBounds(130, 0, 800, 740);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.getGlassPane().addMouseListener(new MouseAdapter() {});
@@ -92,9 +78,43 @@ public class DelineateApplication {
         frame.setVisible(true);
     }
 
-    private SvgViewerController initSvgViewerController(final SettingsPanel settingsPanel) {
-        SvgViewerController svgViewerController = new SvgViewerController();
+    private void addControlTab(String parameterFile, JTabbedPane tabbedPane, boolean optionsPanel) throws Exception, IOException, SAXException {
+        XPathTool xpathTool = new XPathTool(new File(parameterFile));
+        String label = xpathTool.string("/parameters/command/label");
+        String description = xpathTool.string("/parameters/command/description");
+        String optimizer = xpathTool.string("/parameters/command/svg-optimizer");
+        Class optimizerClass = Class.forName(optimizer);
+        SvgOptimizer svgOptimizer = (SvgOptimizer)optimizerClass.newInstance();
+        JPanel controlPanel = getControlPanel(xpathTool, optionsPanel, svgOptimizer);
+        tabbedPane.addTab(label, null, controlPanel, description);
+    }
+
+    private JPanel getControlPanel(XPathTool xpathTool, boolean isOptionsPanel, final SvgOptimizer svgOptimizer) throws Exception {
+        final SettingsPanel settingsPanel = new SettingsPanel(xpathTool);
         svgViewerController.addRenderingListener(settingsPanel);
+
+        JPanel optionsPanel = null;
+        if(isOptionsPanel) {
+            optionsPanel = initOptionsPanel(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String optimizeType = e.getActionCommand();
+                    svgOptimizer.setOptimizeType(optimizeType);
+                }
+            });
+        }
+
+        JPanel convertPanel = new JPanel();
+        JButton button = initConvertButton(convertPanel, settingsPanel, svgOptimizer);
+        convertPanel.add(button);
+        this.convertPanelList.add(convertPanel);
+
+        JPanel controlPanel = createControlPanel(settingsPanel, optionsPanel, convertPanel);
+        return controlPanel;
+    }
+
+    private SvgViewerController initSvgViewerController() {
+        SvgViewerController svgViewerController = new SvgViewerController();
+
         svgViewerController.addRenderingListener(new RenderingListener() {
             public void renderingCompleted() {
                 enableGui();
@@ -107,33 +127,10 @@ public class DelineateApplication {
         return svgViewerController;
     }
 
-    private boolean assertAutotraceInstalled() {
-        boolean autotraceInstalled = false;
-        try {
-            String output = RuntimeUtility.getOutput(new String[] {"autotrace", "-version"});
-            System.out.println(output + " is installed.");
-        } catch(Exception e) {
-            e.printStackTrace();
-            GuiUtilities.showMessage("You must install AutoTrace to run conversions.\n" +
-                "See INSTALL.txt file for details.", "AutoTrace not installed");
-            System.exit(0);
-        }
-        return autotraceInstalled;
-    }
-
-    private JPanel initOptionsPanel(final SvgViewerController viewerController) {
-        ActionListener listener = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String optimizeType = e.getActionCommand();
-                viewerController.setOptimizeType(optimizeType);
-            }
-        };
-
+    private JPanel initOptionsPanel(ActionListener listener) {
         ButtonGroup buttonGroup = new ButtonGroup();
         JPanel panel = new JPanel(new SpringLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Result options"));
-
-        svgViewerController.setOptimizeType(SvgOptimizer.NO_GROUPS);
 
         initRadio(SvgOptimizer.NO_GROUPS, listener, buttonGroup, panel,
                 "Don't place paths in group elements. Each path element has its own style attribute.").setSelected(true);
@@ -166,21 +163,25 @@ public class DelineateApplication {
 //        return menuBar;
 //    }
 
-    private JPanel createControlPanel(final SettingsPanel settingsPanel, JPanel buttonPanel, JPanel optionsPanel) {
+    private JPanel createControlPanel(final SettingsPanel settingsPanel, JPanel optionsPanel, JPanel buttonPanel) {
         JPanel controlPanel = new JPanel(new SpringLayout());
         controlPanel.add(settingsPanel.getPanel());
-        controlPanel.add(optionsPanel);
+        int rows = 2;
+        if(optionsPanel != null) {
+            controlPanel.add(optionsPanel);
+            rows = 3;
+        }
         controlPanel.add(buttonPanel);
-        SpringUtilities.makeCompactGrid(controlPanel, 3, 1, 6, 6, 6, 6);
+        SpringUtilities.makeCompactGrid(controlPanel, rows, 1, 6, 6, 6, 6);
         JPanel controlWrapperPanel = new JPanel();
         controlWrapperPanel.add(controlPanel);
         return controlWrapperPanel;
     }
 
-    private JButton initConvertButton(final JPanel panel, final SettingsPanel settingsPanel) {
+    private JButton initConvertButton(final JPanel panel, final SettingsPanel settingsPanel, final SvgOptimizer svgOptimizer) {
         JButton button = GuiUtilities.initButton("Run", CONVERT_IMAGE_ACTION, KeyEvent.VK_ENTER, 0, panel, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                convert(settingsPanel);
+                convert(settingsPanel, svgOptimizer);
             }
         });
 
@@ -188,14 +189,40 @@ public class DelineateApplication {
         return button;
     }
 
-    private void convert(final SettingsPanel settingsPanel) {
-        if(settingsPanel.inputFileExists()) {
+    private boolean assertTracingApplicationInstalled(String commandName, String command) {
+        boolean installed = true;
+        try {
+            String output = RuntimeUtility.getOutput(new String[] {command, "-version"});
+            System.out.println("Found: " + output);
+        } catch(Exception e) {
+            System.out.println(commandName + " not found");
+            GuiUtilities.showMessage("You must set the path to " + commandName + " to run conversions.\n" +
+                "See INSTALL.txt file for details.", commandName + " not found");
+            installed = false;
+        }
+        return installed;
+    }
+
+    private void convert(final SettingsPanel settingsPanel, final SvgOptimizer svgOptimizer) {
+        final File inputFile = settingsPanel.getInputFile();
+
+        if(inputFile.exists()) {
+            boolean installed = assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0]);
+            if(!installed) {
+                return;
+            }
             disableGui();
+            svgViewerController.setSvgOptimizer(svgOptimizer);
             svgViewerController.setStatus("Converting...");
 
             new Thread() {
                 public void run() {
                     try {
+                        String extension = FileUtilities.getExtension(inputFile);
+
+                        if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
+                            FileUtilities.convertToPnm(inputFile, extension);
+                        };
                         final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.movePreviousSvg(outputFile);
 
@@ -204,13 +231,15 @@ public class DelineateApplication {
 
                         RuntimeUtility.execute(commandArray);
 
-                        svgViewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
-                        svgViewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
+                        svgOptimizer.setBackgroundColor(settingsPanel.getBackgroundColor());
+                        svgOptimizer.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
 
                         svgViewerController.load(FileUtilities.getUri(outputFile));
                     } catch(Exception e) {
+                        e.printStackTrace();
                         GuiUtilities.showMessageInEventQueue("An error occurred, cannot run conversion: \n"
                             + e.getMessage(), "Error");
+                        enableGuiInEventThread();
                     }
                 }
             }.start();
@@ -221,9 +250,20 @@ public class DelineateApplication {
         }
     }
 
+    private void enableGuiInEventThread() {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                enableGui();
+            }
+        });
+    }
+
     private void setConvertImageActionEnabled(boolean enabled) {
-        Action action = convertPanel.getActionMap().get(CONVERT_IMAGE_ACTION);
-        action.setEnabled(enabled);
+        for (Iterator iterator = convertPanelList.iterator(); iterator.hasNext();) {
+            JPanel panel = (JPanel) iterator.next();
+            Action action = panel.getActionMap().get(CONVERT_IMAGE_ACTION);
+            action.setEnabled(enabled);
+        }
     }
 
     private void disableGui() {
@@ -239,7 +279,7 @@ public class DelineateApplication {
     }
 
     public static void main(String args[]) throws Exception {
-        new DelineateApplication(args[0]);
+        new DelineateApplication(args[0], args[1]);
     }
 
 }

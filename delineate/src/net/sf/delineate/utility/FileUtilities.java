@@ -100,6 +100,53 @@ public class FileUtilities {
         out.close();
     }
 
+    public static boolean inBmpFormat(String ext) {
+        return ext.equalsIgnoreCase("bmp");
+    }
+
+    public static boolean inPnmFormat(String ext) {
+        return ext.equalsIgnoreCase("pnm") // any file
+                || ext.equalsIgnoreCase("pbm") // black and white
+                || ext.equalsIgnoreCase("pgm") // grey scale
+                || ext.equalsIgnoreCase("ppm"); // other palette
+    }
+
+    public static String getExtension(File file) {
+        String ext = "";
+        String[] parts = file.getName().split("[.]");
+        if(parts.length == 2) {
+            ext = parts[1];
+        }
+        return ext;
+    }
+
+    public static File convertToPnm(File file, String extension) {
+        String conversionProgram = null;
+        if(extension.equalsIgnoreCase("jpg") || extension.equalsIgnoreCase("jpeg")) {
+            conversionProgram = "jpegtopnm";
+        } else if(extension.equalsIgnoreCase("png")) {
+            conversionProgram = "pngtopnm";
+        } else if(extension.equalsIgnoreCase("gif")) {
+            conversionProgram = "giftopnm";
+        }
+
+        if(conversionProgram != null) {
+            try {
+                String name = file.getName().split("[.]")[0] + ".pnm";
+                String[] commandArray = {"cat", file.getName(), "|", conversionProgram, ">", name};
+
+                RuntimeUtility.execute(commandArray);
+                File newFile = new File(file.getParent(), name);
+                return newFile;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new RuntimeException("");
+        }
+    }
 
 
 }
