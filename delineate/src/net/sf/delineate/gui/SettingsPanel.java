@@ -171,7 +171,7 @@ public class SettingsPanel {
                 if(isNewSavedSetting) {
                     loadSettingsCombo.addItem(name);
                 }
-                
+
                 if(!name.equals(initialName)) {
                     loadSettingsCombo.setSelectedItem(name);
                 }
@@ -289,16 +289,28 @@ public class SettingsPanel {
 
         if(settingName.equals(DEFAULT_SETTING_NAME)) {
             command.setCommandDefaultValues();
+        }
+
+        command.setCommand(commandSetting);
+
+        if(settingName.equals(DEFAULT_SETTING_NAME)) {
             deleteAction.setEnabled(false);
         } else {
             deleteAction.setEnabled(true);
         }
-
-        command.setCommand(commandSetting);
     }
 
     private Properties loadProperties() {
         File file = getSettingsFile();
+
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this.panel, "Cannot create settings.prop file: " + e.getMessage(), "Error", JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+
         Properties properties = new Properties();
 
         try {
