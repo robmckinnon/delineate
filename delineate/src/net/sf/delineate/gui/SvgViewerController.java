@@ -24,16 +24,15 @@ import org.apache.batik.swing.JSVGCanvas;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
+import javax.swing.ActionMap;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
-import javax.swing.SpringLayout;
-import javax.swing.SpringUtilities;
-import javax.swing.ActionMap;
 import java.awt.Adjustable;
+import java.awt.BorderLayout;
 import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
@@ -52,20 +51,21 @@ public class SvgViewerController {
     private SvgViewerPanel svgViewerB;
     private SvgViewerPanel svgViewerA;
 
-    private JPanel panel = new JPanel(new SpringLayout());
+    private JPanel panel = new JPanel(new BorderLayout());
 
     public SvgViewerController() {
         svgViewerA = new SvgViewerPanel("Result: ", InputEvent.CTRL_MASK);
         svgViewerB = new SvgViewerPanel("Previous result: ", InputEvent.CTRL_MASK + InputEvent.SHIFT_MASK);
 
-        panel.add(svgViewerA.getViewerPanel());
-        panel.add(svgViewerB.getViewerPanel());
-        panel.setBorder(BorderFactory.createEmptyBorder());
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, svgViewerA.getViewerPanel(), svgViewerB.getViewerPanel());
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(0.5);
+        splitPane.setResizeWeight(0.5);
 
         installListeners();
         installActions();
 
-        SpringUtilities.makeCompactGrid(panel, 2, 1, 1, 1, 4, 4);
+        panel.add(splitPane);
     }
 
     private void installListeners() {

@@ -29,9 +29,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -58,15 +58,14 @@ public class DelineateApplication {
         JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
 
-        JPanel panel = new JPanel(new BorderLayout());
-//        panel.add(menuBar, BorderLayout.NORTH);
-        panel.add(controlPanel, BorderLayout.EAST);
-        panel.add(svgViewerController.getSvgViewerPanels());
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, svgViewerController.getSvgViewerPanels(), controlPanel);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setResizeWeight(1);
 
-        frame.setContentPane(panel);
+        frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 30, 800, 700);
+        frame.setBounds(130, 30, 800, 712);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
