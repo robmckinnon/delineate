@@ -26,6 +26,20 @@ To install, see INSTALL.txt
 Change Log
 ----------
 
+0.3.1 to 0.4
+
+- Now offer a choice of three SVG path grouping options:
+  - No groups: Don't place paths in group elements.
+               Each path element has its own style attribute.
+  - Group by color: Place paths in group elements based on color.
+               Use with color count setting to reduce file size.
+  - One group: Place all paths in one group element that defines
+               styles common to all paths.
+- Removed the create SVG style definitions option, because Mozilla and Sodipodi
+  don't handle style definitions well. Use the group by color option instead.
+- Show wait cursor when conversion is running.
+- Fixed bug with result file being lost when output file setting is changed.
+
 0.3 to 0.3.1
 
 - Fixed bugs related to filenames that have spaces in them.

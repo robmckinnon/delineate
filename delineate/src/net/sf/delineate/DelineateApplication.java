@@ -136,11 +136,11 @@ public class DelineateApplication {
         svgViewerController.setOptimizeType(SvgOptimizer.NO_GROUPS);
 
         initRadio(SvgOptimizer.NO_GROUPS, listener, buttonGroup, panel,
-                "Don't place paths in group elements. Each path element has a style attribute.").setSelected(true);
+                "Don't place paths in group elements. Each path element has its own style attribute.").setSelected(true);
         initRadio(SvgOptimizer.COLOR_GROUPS, listener, buttonGroup, panel,
                 "Place paths in group elements based on color. Use with color count setting to reduce file size.");
         initRadio(SvgOptimizer.ONE_GROUP, listener, buttonGroup, panel,
-                "Place all paths in one group element that defines common style setting.");
+                "Place all paths in one group element that defines styles common to all paths.");
 
 //        Don't show style definition option, because resulting file doesn't render properly in SodiPodi, nor Mozilla
 //        initRadio(SvgOptimizer.STYLE_DEFS, listener, buttonGroup, panel,
