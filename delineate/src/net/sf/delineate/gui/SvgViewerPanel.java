@@ -79,6 +79,7 @@ public class SvgViewerPanel {
 
     public void closeViewSourceFrame() {
         viewSourceAction.closeFrame();
+        viewSourceAction.setSourceUrl(null);
     }
 
     private void installActions() {
