@@ -23,42 +23,30 @@ import net.sf.delineate.command.Command;
 import net.sf.delineate.utility.XPathTool;
 import org.xml.sax.SAXException;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
-import javax.swing.SpringUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
+import java.util.Properties;
 
 /**
+ * Controls user defined settings.
  * @author robmckinnon@users.sourceforge.net
  */
 public class SettingsPanel {
 
     private JPanel panel;
     private Command command;
-    private JTextArea commandTextArea;
+//    private JTextArea commandTextArea;
 
     private ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -74,10 +62,12 @@ public class SettingsPanel {
         }
     };
     private HashMap fileTextFieldMap = new HashMap(5);
+    private static final String SAVE_SETTINGS_ACTION = "SaveSettingsAction";
+    private static final String LOAD_SETTINGS_ACTION = "SaveSettingsAction";
 
 
     public SettingsPanel(String parameterFile) throws Exception {
-        commandTextArea = initCommandTextArea();
+//        commandTextArea = initCommandTextArea();
 
 //        JPanel commandPanel = new JPanel();
 //        commandPanel.add(commandTextArea);
@@ -95,21 +85,74 @@ public class SettingsPanel {
     }
 
     public String getCommand() {
-        return commandTextArea.getText();
+        return command.getCommand();// commandTextArea.getText();
     }
 
     public String getOutputFile() {
         return command.getParameterValue("output-file");
     }
 
-    private JTextArea initCommandTextArea() {
-        JTextArea textArea = new JTextArea(5, 30);
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        textArea.setEditable(false);
-        textArea.setBorder(BorderFactory.createLineBorder(Color.gray));
-        return textArea;
+    public Action getSaveSettingsAction() {
+        AbstractAction action = new AbstractAction() {
+                    public void actionPerformed(ActionEvent event) {
+                        Properties properties = new Properties();
+                        properties.setProperty("setting", getCommand());
+                        String settingsFile = "settings.prop";
+                        File file = new File(settingsFile);
+                        try {
+                            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
+                            properties.store(outputStream, settingsFile);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+
+
+        setKeyBinding(SAVE_SETTINGS_ACTION, KeyEvent.VK_S, KeyEvent.CTRL_MASK, action);
+
+        return action;
     }
+
+    private void setKeyBinding(String actionKey, int key, int modifiers, AbstractAction action) {
+        ActionMap actionMap = panel.getActionMap();
+        InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
+        inputMap.put(keyStroke, actionKey);
+        actionMap.put(actionKey, action);
+    }
+
+    public Action getLoadSettingsAction() {
+        AbstractAction action = new AbstractAction() {
+                    public void actionPerformed(ActionEvent event) {
+                        String settingsFile = "settings.prop";
+                        File file = new File(settingsFile);
+                        Properties properties = new Properties();
+
+                        try {
+                            BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
+                            properties.load(inStream);
+                            String property = properties.getProperty("setting");
+                            command.setCommand(property);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+
+        setKeyBinding(LOAD_SETTINGS_ACTION, KeyEvent.VK_L, KeyEvent.CTRL_MASK, action);
+
+        return action;
+    }
+
+//    private JTextArea initCommandTextArea() {
+//        JTextArea textArea = new JTextArea(5, 30);
+//        textArea.setLineWrap(true);
+//        textArea.setWrapStyleWord(true);
+//        textArea.setEditable(false);
+//        textArea.setBorder(BorderFactory.createLineBorder(Color.gray));
+//        return textArea;
+//    }
 
     private JPanel initContentPane(String parameterFile) throws ParserConfigurationException, IOException, SAXException, TransformerException {
         XPathTool xpath = new XPathTool(new File(parameterFile));
@@ -118,7 +161,7 @@ public class SettingsPanel {
 
         command = new Command(parameterCount, new Command.CommandChangeListener() {
             public void commandChanged(String commandText) {
-                commandTextArea.setText(commandText);
+//                commandTextArea.setText(commandText);
             }
         });
 

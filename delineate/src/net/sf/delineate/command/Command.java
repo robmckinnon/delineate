@@ -22,6 +22,7 @@ package net.sf.delineate.command;
 import net.sf.delineate.command.Parameter;
 
 import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
  * Represents Autotrace command.
@@ -29,13 +30,13 @@ import java.util.Arrays;
  */
 public class Command {
 
-    private CommandChangeListener changeListener;
+//    private CommandChangeListener changeListener;
     private Parameter[] parameters;
     int parameterCount = 0;
 
     public Command(int totalParameterCount, CommandChangeListener listener) {
         parameters = new Parameter[totalParameterCount];
-        changeListener = listener;
+//        changeListener = listener;
     }
 
     public void addParameter(String name, boolean enabled, String value) {
@@ -49,7 +50,7 @@ public class Command {
 
         if(parameterCount == parameters.length) {
             Arrays.sort(parameters);
-            changeListener.commandChanged(getCommand());
+//            changeListener.commandChanged(getCommand());
         }
     }
 
@@ -58,7 +59,7 @@ public class Command {
 
         if(parameter.enabled != enabled) {
             parameter.enabled = enabled;
-            changeListener.commandChanged(getCommand());
+//            changeListener.commandChanged(getCommand());
         }
     }
 
@@ -67,11 +68,11 @@ public class Command {
 
         if(!parameter.value.equals(value)) {
             parameter.value = value;
-            changeListener.commandChanged(getCommand());
+//            changeListener.commandChanged(getCommand());
         }
     }
 
-    private String getCommand() {
+    public String getCommand() {
         StringBuffer buffer = new StringBuffer();
         for(int i = 0; i < parameters.length; buffer.append(parameters[i++].paramValue())) ;
         String command = "autotrace " + buffer.toString();
@@ -90,6 +91,15 @@ public class Command {
 
     public String getParameterValue(String name) {
         return getParameter(name).value;
+    }
+
+    public void setCommand(String command) {
+        StringTokenizer tokenizer = new StringTokenizer(command, " ");
+        tokenizer.nextToken();
+
+        while(tokenizer.hasMoreTokens()) {
+            
+        }
     }
 
     /**
