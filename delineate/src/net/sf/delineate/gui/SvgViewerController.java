@@ -21,6 +21,7 @@ package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
 import org.apache.batik.swing.JSVGCanvas;
+import org.w3c.dom.Document;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -190,6 +191,10 @@ public class SvgViewerController {
 
     public void setStatus(String text) {
         svgViewerA.setStatus(text);
+    }
+
+    public Document getSvgDocument() {
+        return svgViewerA.getSvgDocument();
     }
 
     private class ScrollListener implements AdjustmentListener {
