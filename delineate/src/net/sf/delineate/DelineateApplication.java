@@ -106,6 +106,9 @@ public class DelineateApplication {
             });
         } else {
             optionsPanel = new JPanel();
+            optionsPanel.setBorder(BorderFactory.createTitledBorder("Brightness threshold"));
+            optionsPanel.setToolTipText("Black/white cutoff; pixels brighter than threshold " +
+                    "are converted to white, those below to black.");
             SpinnerNumberModel model = new SpinnerNumberModel(50, 0, 100, 1);
             SpinnerSlider spinnerSlider = new SpinnerSlider(model);
             optionsPanel.add(spinnerSlider.getSpinner());
@@ -219,9 +222,9 @@ public class DelineateApplication {
     }
 
     private void convert(final SettingsPanel settingsPanel, final SvgOptimizer svgOptimizer) {
-        final File inputFile = settingsPanel.getInputFile();
+        final File file = settingsPanel.getInputFile();
 
-        if(inputFile.exists()) {
+        if(file.exists()) {
             boolean installed = assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0]);
             if(!installed) {
                 return;
@@ -233,26 +236,19 @@ public class DelineateApplication {
             new Thread() {
                 public void run() {
                     try {
-                        String extension = FileUtilities.getExtension(inputFile);
+                        File convertedFile = null;
 
-                        File file = null;
-
-//                        if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
-//                            file = FileUtilities.convertToPnm(inputFile);
-//                        };
                         if(settingsPanel.getCommandName().equals("potrace")) {
-                            file = FileUtilities.convertToPbm(inputFile, svgOptimizer.getThresholdPercent());
+                            convertedFile = ImageUtilities.convertToPbm(file, svgOptimizer.getThresholdPercent());
+                            Dimension dimension = ImageUtilities.getDimension(convertedFile);
+                            settingsPanel.setHeight(dimension.getHeight() / 72);
+                            settingsPanel.setWidth(dimension.getWidth() / 72);
+                        } else if(!(ImageUtilities.inBmpFormat(file) || ImageUtilities.inPnmFormat(file))) {
+                            convertedFile = ImageUtilities.convertToPnm(file);
+                        }
 
-                            Dimension dimension = FileUtilities.getDimension(file);
-                            double height = dimension.getHeight();
-                            double width = dimension.getWidth();
-                            settingsPanel.setHeight(height / 72);
-                            settingsPanel.setWidth(width / 72);
-                        } else if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
-                            file = FileUtilities.convertToPnm(inputFile);
-                        };
-                        if(file != null && file.exists()) {
-                            settingsPanel.setInputFile(file);
+                        if(convertedFile != null && convertedFile.exists()) {
+                            settingsPanel.setInputFile(convertedFile);
                         }
                         final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.movePreviousSvg(outputFile);
@@ -261,7 +257,11 @@ public class DelineateApplication {
                         System.out.println(settingsPanel.getCommand());
 
                         RuntimeUtility.execute(commandArray);
-                        settingsPanel.setInputFile(inputFile);
+
+                        if(convertedFile != null && convertedFile.exists()) {
+                            settingsPanel.setInputFile(file);
+                            convertedFile.delete();
+                        }
 
                         svgOptimizer.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgOptimizer.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
