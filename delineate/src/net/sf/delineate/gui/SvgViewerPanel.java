@@ -62,6 +62,7 @@ public class SvgViewerPanel {
     private JScrollBar verticalScrollBar;
     private JPanel viewerPanel;
     private ActionMap controllerActionMap;
+    private final ViewSourceAction viewSourceAction = new ViewSourceAction();
 
     public SvgViewerPanel(String resultText, int modifier) {
         this.modifier = modifier;
@@ -75,6 +76,10 @@ public class SvgViewerPanel {
     }
 
 
+    public void closeViewSourceFrame() {
+        viewSourceAction.closeFrame();
+    }
+
     private void installActions() {
         InputMap inputMap = svgCanvas.getInputMap();
         KeyStroke[] keys = inputMap.keys();
@@ -85,7 +90,7 @@ public class SvgViewerPanel {
         }
 
         ActionMap actionMap = svgCanvas.getActionMap();
-        actionMap.put(SvgViewerPanel.VIEW_SOURCE_ACTION, new ViewSourceAction());
+        actionMap.put(SvgViewerPanel.VIEW_SOURCE_ACTION, viewSourceAction);
     }
 
     private void installListeners(final String resultText) {

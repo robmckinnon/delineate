@@ -37,6 +37,7 @@ import javax.swing.ImageIcon;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
@@ -126,6 +127,13 @@ public class DelineateApplication {
                 settingsPanel.updateFileSize();
             } catch(Exception e) {
                 e.printStackTrace();
+                if(e instanceof IOException && e.getMessage().indexOf("autotrace: not found") != -1) {
+                    showMessage("You must install AutoTrace to run conversions.\n" +
+                        "See INSTALL.txt file for details.", "AutoTrace not installed");
+                    System.exit(0);
+                } else {
+                    showMessage("An error occurred, cannot run conversion: " + e.getMessage(), "Error");
+                }
             }
         } else {
             showMessage("Input file does not exist.", "Invalid input file");

@@ -31,6 +31,7 @@ import javax.swing.JTextArea;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.event.ActionEvent;
+import java.awt.EventQueue;
 import java.io.InputStream;
 import java.io.Reader;
 
@@ -39,9 +40,17 @@ import java.io.Reader;
  */
 public class ViewSourceAction extends AbstractAction {
 
-    SVGDocument svgDocument;
-    int x;
-    int y;
+    private SVGDocument svgDocument;
+    private int x;
+    private int y;
+    private final JFrame frame = new JFrame();
+    private final JTextArea textArea = new JTextArea();
+
+    public ViewSourceAction() {
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.getViewport().add(textArea);
+        frame.setContentPane(scrollPane);
+    }
 
     public void setSvgDocument(SVGDocument svgDocument) {
         this.svgDocument = svgDocument;
@@ -52,35 +61,48 @@ public class ViewSourceAction extends AbstractAction {
         this.y = y;
     }
 
+    public void closeFrame() {
+        synchronized(frame) {
+            if(frame != null) {
+                frame.setVisible(false);
+            }
+        }
+    }
+
     public void actionPerformed(ActionEvent e) {
         System.out.println("View source action performed");
         final ParsedURL url = new ParsedURL(svgDocument.getURL());
-        final JFrame frame = new JFrame(url.toString());
-        final JTextArea textArea = new JTextArea();
-
-        JScrollPane scrollPane = new JScrollPane();
-        scrollPane.getViewport().add(textArea);
-        frame.setContentPane(scrollPane);
 
         new Thread() {
             public void run() {
                 char[] buffer = new char[4096];
 
                 try {
-                    Document document = new PlainDocument();
                     InputStream inputStream = url.openStream(MimeTypeConstants.MIME_TYPES_SVG);
                     Reader reader = XMLUtilities.createXMLDocumentReader(inputStream);
                     int length;
+
+                    final Document document = new PlainDocument();
 
                     while((length = reader.read(buffer, 0, buffer.length)) != -1) {
                         document.insertString(document.getLength(), new String(buffer, 0, length), null);
                     }
 
-                    textArea.setDocument(document);
-                    textArea.setEditable(false);
+                    reader.close();
+                    inputStream.close();
 
-                    frame.setBounds(x, y, 600, 200);
-                    frame.show();
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            synchronized(frame) {
+                                textArea.setDocument(document);
+                                textArea.setEditable(false);
+
+                                frame.setTitle(url.toString());
+                                frame.setBounds(x, y, 600, 200);
+                                frame.setVisible(true);
+                            }
+                        }
+                    });
                 } catch(Exception ex) {
                     ex.printStackTrace();
                 }

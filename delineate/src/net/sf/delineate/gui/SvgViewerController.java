@@ -155,6 +155,8 @@ public class SvgViewerController {
 
     public void movePreviousSvg() {
         if(uri != null) {
+            svgViewerA.closeViewSourceFrame();
+            svgViewerB.closeViewSourceFrame();
             File file = FileUtilities.getFile(uri);
             File previousFile = new File(file.getParent(), file.getName() + '~');
             previousFile.delete();
