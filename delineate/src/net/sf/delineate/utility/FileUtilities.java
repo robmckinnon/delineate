@@ -20,6 +20,9 @@
 package net.sf.delineate.utility;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 /**
  * File helper methods.
@@ -35,6 +38,10 @@ public class FileUtilities {
 //            System.out.println(name + " " + properties.get(name));
 //        }
 //    }
+
+    public static String getUri(String filePath) {
+        return "file:" + filePath;
+    }
 
     public static File getFile(String uri) {
         String pathname = uri.substring(uri.indexOf(':')  + 1);
@@ -74,5 +81,20 @@ public class FileUtilities {
 
         return value;
     }
+
+    public static void copy(File inputFile, File outputFile) throws IOException {
+        FileReader in = new FileReader(inputFile);
+        FileWriter out = new FileWriter(outputFile);
+        int c;
+
+        while((c = in.read()) != -1) {
+            out.write(c);
+        }
+
+        in.close();
+        out.close();
+    }
+
+
 
 }

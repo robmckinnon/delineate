@@ -44,6 +44,7 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -166,25 +167,33 @@ public class SvgViewerController {
         return panel;
     }
 
-    public void movePreviousSvg() throws InterruptedException, InvocationTargetException {
+    public void movePreviousSvg(String newOutputFile) throws InterruptedException, InvocationTargetException {
         if(uri != null) {
             svgViewerA.closeViewSourceFrame();
             svgViewerB.closeViewSourceFrame();
 
             File file = FileUtilities.getFile(uri);
             File previousFile = new File(file.getParent(), file.getName() + '~');
+
             if(previousFile.exists()) {
                 previousFile.delete();
             }
-            file.renameTo(previousFile);
+
+            if(file.getPath().equals(newOutputFile)) { // safe to rename last output file
+                file.renameTo(previousFile);
+            } else { // must copy last output file
+                try {
+                    FileUtilities.copy(file, previousFile);
+                } catch(IOException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
 
             svgViewerB.setPathCount(svgViewerA.getPathCount());
             final SVGDocument svgDocument = (SVGDocument)svgViewerA.getSvgDocument().cloneNode(true);
 
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-//                    svgViewerB.setURI(uri + '~');
-//                    svgViewerB.setSvgDocument(uri + '~', svgViewerA.getSvgDocument());
                     svgViewerB.setSvgDocument(uri + '~', svgDocument);
                 }
             });

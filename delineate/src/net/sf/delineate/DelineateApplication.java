@@ -22,6 +22,7 @@ package net.sf.delineate;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.GuiUtilities;
+import net.sf.delineate.utility.FileUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -52,7 +53,7 @@ import java.io.InputStreamReader;
  */
 public class DelineateApplication {
     private static final String CONVERT_IMAGE_ACTION = "Convert";
-    private static final JFrame frame = new JFrame("Delineate - raster to SVG converter v0.3");
+    private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
     private final SvgViewerController svgViewerController;
 
     public DelineateApplication(String parameterFile) throws Exception {
@@ -150,7 +151,8 @@ public class DelineateApplication {
             new Thread() {
                 public void run() {
                     try {
-                        svgViewerController.movePreviousSvg();
+                        final String outputFile = settingsPanel.getOutputFile();
+                        svgViewerController.movePreviousSvg(outputFile);
 
                         String[] commandArray = settingsPanel.getCommandAsArray();
                         System.out.println(settingsPanel.getCommand());
@@ -169,11 +171,10 @@ public class DelineateApplication {
                         }
 
                         new BufferedInputStream(process.getErrorStream());
-                        final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgViewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
 
-                        svgViewerController.load("file:" + outputFile);
+                        svgViewerController.load(FileUtilities.getUri(outputFile));
                     } catch(Exception e) {
                         e.printStackTrace();
                         if(e instanceof IOException) {
