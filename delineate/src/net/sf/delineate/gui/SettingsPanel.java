@@ -20,21 +20,45 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.command.Command;
+import net.sf.delineate.utility.ColorUtilities;
 import net.sf.delineate.utility.XPathTool;
 import org.xml.sax.SAXException;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SpringLayout;
+import javax.swing.SpringUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -44,11 +68,16 @@ import java.util.Properties;
  */
 public class SettingsPanel {
 
+    private static final String SAVE_SETTINGS_ACTION = "SaveSettingsAction";
+    private static final String LOAD_SETTINGS_ACTION = "SaveSettingsAction";
+
     private JPanel panel;
     private Command command;
 //    private JTextArea commandTextArea;
 
-    private ChangeListener changeListener = new ChangeListener() {
+    private final HashMap textFieldMap = new HashMap(5);
+
+    private final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
             Object source = e.getSource();
 
@@ -61,9 +90,14 @@ public class SettingsPanel {
             }
         }
     };
-    private HashMap fileTextFieldMap = new HashMap(5);
-    private static final String SAVE_SETTINGS_ACTION = "SaveSettingsAction";
-    private static final String LOAD_SETTINGS_ACTION = "SaveSettingsAction";
+
+    private final KeyAdapter textFieldKeyListener = new KeyAdapter() {
+        public void keyReleased(KeyEvent e) {
+            JTextField textField = ((JTextField)e.getSource());
+            command.setParameterValue(textField.getName(), textField.getText());
+        }
+    };
+    private static final String BACKGROUND_COLOR_PARAMETER = "background-color";
 
 
     public SettingsPanel(String parameterFile) throws Exception {
@@ -121,7 +155,7 @@ public class SettingsPanel {
     }
 
     public void selectInputTextField() {
-        JTextField textField = (JTextField)fileTextFieldMap.get("input-file");
+        JTextField textField = getTextField("input-file");
         textField.selectAll();
         textField.requestFocus();
     }
@@ -246,16 +280,14 @@ public class SettingsPanel {
             textField.setName(name);
             textField.setColumns(15);
 
-            textField.addKeyListener(new KeyAdapter() {
-                public void keyReleased(KeyEvent e) {
-                    JTextField textField = ((JTextField)e.getSource());
-                    command.setParameterValue(textField.getName(), textField.getText());
-                }
-            });
+            textField.addKeyListener(textFieldKeyListener);
 
-            if(name.endsWith("file")) {
-                fileTextFieldMap.put(name, textField);
+            textFieldMap.put(name, textField);
+
+            if(name.equals(BACKGROUND_COLOR_PARAMETER)) {
+                textField.setEnabled(false);
             }
+
             return textField;
         } else {
             return new JLabel("");
@@ -294,45 +326,97 @@ public class SettingsPanel {
         JLabel label = new JLabel(name.replace('-', ' '));
         label.setToolTipText(desc);
 
-        JPanel panel = new JPanel(new BorderLayout());
+        final JPanel panel = new JPanel(new BorderLayout());
         panel.add(label, BorderLayout.WEST);
 
         if(optional) {
-            final JCheckBox checkBox = new JCheckBox("", false);
-            checkBox.setName(name);
-            checkBox.setToolTipText(desc);
-            checkBox.setSelected(enabled);
-            checkBox.addChangeListener(changeListener);
-            if(spinnerSlider != null) {
-                checkBox.addChangeListener(new ChangeListener() {
-                    public void stateChanged(ChangeEvent e) {
-                        spinnerSlider.setEnabled(checkBox.isSelected());
+            JButton button = null;
+
+            if(name.equals(BACKGROUND_COLOR_PARAMETER)) {
+                button = new JButton("?");
+                button.setToolTipText("Choose color");
+                button.setEnabled(false);
+                button.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        chooseColor(panel);
                     }
                 });
+
+                JPanel p = new JPanel();
+                p.add(button);
+                panel.add(p);
             }
+            JCheckBox checkBox = initCheckbox(name, desc, enabled, spinnerSlider, button);
             panel.add(checkBox, BorderLayout.EAST);
         } else if(isFileParameter) {
-            final JFileChooser fileChooser = new JFileChooser();
-
-            JButton button = new JButton("browse");
-            button.setToolTipText("Browse files");
-            button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    int response = fileChooser.showOpenDialog((JComponent)e.getSource());
-
-                    if(response == JFileChooser.APPROVE_OPTION) {
-                        File file = fileChooser.getSelectedFile();
-                        JTextField textField = (JTextField)fileTextFieldMap.get(name);
-                        textField.setText(file.getPath());
-                        command.setParameterValue(textField.getName(), textField.getText());
-                    }
-                }
-            });
-
+            JButton button = initFileChooserButton(name);
             panel.add(button, BorderLayout.EAST);
         }
 
         return panel;
+    }
+
+    private void chooseColor(final JPanel panel) {
+        JTextField textField = getTextField(BACKGROUND_COLOR_PARAMETER);
+        String colorParameter = command.getParameterValue(BACKGROUND_COLOR_PARAMETER);
+        Color initialColor = ColorUtilities.getColor(colorParameter);
+        Color color = JColorChooser.showDialog(panel, "Choose background color", initialColor);
+        if(color != null) {
+            String hexColor = ColorUtilities.getHexColor(color);
+            command.setParameterValue(BACKGROUND_COLOR_PARAMETER, hexColor);
+            textField.setText(hexColor);
+            textField.setBackground(color);
+        }
+    }
+
+    private JButton initFileChooserButton(final String name) {
+        final JFileChooser fileChooser = new JFileChooser();
+
+        JButton button = new JButton("browse");
+        button.setToolTipText("Browse files");
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int response = fileChooser.showOpenDialog((JComponent)e.getSource());
+
+                if(response == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    JTextField textField = getTextField(name);
+                    textField.setText(file.getPath());
+                    command.setParameterValue(textField.getName(), textField.getText());
+                }
+            }
+        });
+        return button;
+    }
+
+    private JCheckBox initCheckbox(final String name, String desc, boolean enabled, final SpinnerSlider spinnerSlider, final JButton button) {
+        final JCheckBox checkBox = new JCheckBox("", false);
+        checkBox.setName(name);
+        checkBox.setToolTipText(desc);
+        checkBox.setSelected(enabled);
+        if(spinnerSlider != null) {
+            checkBox.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    spinnerSlider.setEnabled(checkBox.isSelected());
+                }
+            });
+        } else {
+            checkBox.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    JTextField textField = getTextField(BACKGROUND_COLOR_PARAMETER);
+                    textField.setEnabled(checkBox.isSelected());
+                    button.setEnabled(checkBox.isSelected());
+                }
+            });
+        }
+        checkBox.addChangeListener(changeListener);
+
+        return checkBox;
+    }
+
+    private JTextField getTextField(String key) {
+        JTextField textField = (JTextField)textFieldMap.get(key);
+        return textField;
     }
 
     private SpinnerNumberModel initSpinnerModel(boolean useWholeNumbers, XPathTool xpath, String defaultValue) throws TransformerException {

@@ -43,14 +43,14 @@ import java.awt.event.KeyEvent;
  */
 public class DelineateApplication {
     private static final String CONVERT__IMAGE__ACTION = "Convert";
+    private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
 
     public DelineateApplication(String parameterFile) throws Exception {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
-        JFrame frame = new JFrame("Delineate - raster to SVG converter");
         final SvgViewerController svgViewerController = new SvgViewerController();
 
-        JButton button = initConvertButton(frame, settingsPanel, svgViewerController);
+        JButton button = initConvertButton(settingsPanel, svgViewerController);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
@@ -85,14 +85,14 @@ public class DelineateApplication {
         return controlWrapperPanel;
     }
 
-    private JButton initConvertButton(final JFrame frame, final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
+    private JButton initConvertButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         JPanel panel = settingsPanel.getPanel();
         ActionMap actionMap = panel.getActionMap();
         InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         actionMap.put(CONVERT__IMAGE__ACTION, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                convert(settingsPanel, viewerController, frame);
+                convert(settingsPanel, viewerController);
             }
         });
 
@@ -104,7 +104,7 @@ public class DelineateApplication {
         return button;
     }
 
-    private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController, final JFrame frame) {
+    private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         if(settingsPanel.inputFileExists()) {
             viewerController.movePreviousSvg();
 
@@ -119,11 +119,13 @@ public class DelineateApplication {
                 e.printStackTrace();
             }
         } else {
-            String message = "Input file does not exist.";
-            String title = "Invalid input file";
-            JOptionPane.showMessageDialog(frame, message, title, JOptionPane.PLAIN_MESSAGE);
+            showMessage("Input file does not exist.", "Invalid input file");
             settingsPanel.selectInputTextField();
         }
+    }
+
+    public static void showMessage(String message, String title) {
+        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void main(String args[]) throws Exception {
