@@ -38,6 +38,7 @@ public abstract class SvgOptimizer {
     protected int pathCount = 0;
     protected String type = SvgOptimizer.NO_GROUPS;
     protected String background = null;
+    private int thresholdPercent = 50;
 
     public int getPathCount() {
         return pathCount;
@@ -75,15 +76,25 @@ public abstract class SvgOptimizer {
         w.print("\"");
     }
 
+    private void writeViewBox(PrintWriter w, String viewBox) {
+        if(viewBox.length() > 0) {
+            w.print(" viewBox=\"");
+            w.print(viewBox);
+            w.print("\"");
+        }
+    }
+
     protected void writeDocumentStart(PrintWriter w, SVGSVGElement rootElement) {
         String width = rootElement.getWidth().getBaseVal().getValueAsString();
         String height = rootElement.getHeight().getBaseVal().getValueAsString();
+        String viewBox = rootElement.getAttribute("viewBox");
 
         w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
         w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
 
         w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" ");
         writeWidthAndHeight(w, width, height);
+        writeViewBox(w, viewBox);
         w.println(">");
 
         if(background != null) {
@@ -99,6 +110,14 @@ public abstract class SvgOptimizer {
 //        SVGSVGElement rootElement = svgDocument.getRootElement();
 //        rootElement.removeAttribute("width");
 //        rootElement.removeAttribute("height");
+    }
+
+    public void setThresholdPercent(int value) {
+        thresholdPercent = value;
+    }
+
+    public int getThresholdPercent() {
+        return thresholdPercent;
     }
 
 }

@@ -22,9 +22,12 @@ package net.sf.delineate;
 import net.sf.delineate.gui.RenderingListener;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
+import net.sf.delineate.gui.SpinnerSlider;
 import net.sf.delineate.utility.*;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -99,6 +102,18 @@ public class DelineateApplication {
                 public void actionPerformed(ActionEvent e) {
                     String optimizeType = e.getActionCommand();
                     svgOptimizer.setOptimizeType(optimizeType);
+                }
+            });
+        } else {
+            optionsPanel = new JPanel();
+            SpinnerNumberModel model = new SpinnerNumberModel(50, 0, 100, 1);
+            SpinnerSlider spinnerSlider = new SpinnerSlider(model);
+            optionsPanel.add(spinnerSlider.getSpinner());
+            optionsPanel.add(spinnerSlider.getSlider());
+            spinnerSlider.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    SpinnerSlider spinnerSlider = (SpinnerSlider)e.getSource();
+                    svgOptimizer.setThresholdPercent(spinnerSlider.getSlider().getValue());
                 }
             });
         }
@@ -220,13 +235,25 @@ public class DelineateApplication {
                     try {
                         String extension = FileUtilities.getExtension(inputFile);
 
-                        if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
-                            File file = FileUtilities.convertToPnm(inputFile);
-                            if(file.exists()) {
-                                settingsPanel.setInputFile(file);
-                            }
+                        File file = null;
+
+//                        if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
+//                            file = FileUtilities.convertToPnm(inputFile);
+//                        };
+                        if(settingsPanel.getCommandName().equals("potrace")) {
+                            file = FileUtilities.convertToPbm(inputFile, svgOptimizer.getThresholdPercent());
+
+                            Dimension dimension = FileUtilities.getDimension(file);
+                            double height = dimension.getHeight();
+                            double width = dimension.getWidth();
+                            settingsPanel.setHeight(height / 72);
+                            settingsPanel.setWidth(width / 72);
+                        } else if(!(FileUtilities.inBmpFormat(extension) || FileUtilities.inPnmFormat(extension))) {
+                            file = FileUtilities.convertToPnm(inputFile);
                         };
-                        
+                        if(file != null && file.exists()) {
+                            settingsPanel.setInputFile(file);
+                        }
                         final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.movePreviousSvg(outputFile);
 
@@ -234,6 +261,7 @@ public class DelineateApplication {
                         System.out.println(settingsPanel.getCommand());
 
                         RuntimeUtility.execute(commandArray);
+                        settingsPanel.setInputFile(inputFile);
 
                         svgOptimizer.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgOptimizer.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());

@@ -76,12 +76,4 @@ public class RuntimeUtility {
         return buffer.toString();
     }
 
-    public static void main(String[] args) throws Exception {
-        args = new String[] {"C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe", "C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg"};
-//        args = new String[] {"C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe", "ee"};
-//        execute("C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm \"C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg\"");
-//        execute("C:\\apps\\netpbm\\10.15\\usr\\local\\bin\\netpbm\\jpegtopnm.exe \"C:\\Documents and Settings\\Ileana Branisteanu\\My Documents\\RobsStuff\\photo\\bomb.jpg\"");
-        execute(args);
-    }
-
 }

@@ -15,6 +15,16 @@
   </parameter>
 
   <parameter>
+    <name>height</name>
+    <optional>false</optional>
+  </parameter>
+
+  <parameter>
+    <name>width</name>
+    <optional>false</optional>
+  </parameter>
+
+  <parameter>
     <function>input-file</function>
     <name>input-file</name>
     <optional>false</optional>
@@ -28,6 +38,26 @@
     <optional>false</optional>
     <default>./img/walk.svg</default>
     <description>Ouput filename.</description>
+  </parameter>
+  
+  <parameter>
+    <name>invert</name>
+    <optional>true</optional>
+    <enabled>false</enabled>
+    <description>Invert bitmap.</description>
+  </parameter>
+
+  <parameter>
+    <name>turdsize</name>
+    <optional>false</optional>
+    <default>2</default>
+    <range>
+      <use-whole-numbers>true</use-whole-numbers>
+      <min>0</min>
+      <max>20</max>
+      <step>1</step>
+    </range>
+    <description>Suppress speckles of up to this size (default 2).</description>
   </parameter>
 
 </parameters>

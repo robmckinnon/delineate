@@ -19,17 +19,22 @@
  */
 package net.sf.delineate.utility;
 
-import net.sourceforge.jiu.gui.awt.ToolkitLoader;
-import net.sourceforge.jiu.data.PixelImage;
-import net.sourceforge.jiu.codecs.PNMCodec;
 import net.sourceforge.jiu.codecs.CodecMode;
+import net.sourceforge.jiu.codecs.PNMCodec;
+import net.sourceforge.jiu.color.promotion.PromotionRGB24;
+import net.sourceforge.jiu.color.reduction.RGBToGrayConversion;
+import net.sourceforge.jiu.color.reduction.ReduceToBilevelThreshold;
+import net.sourceforge.jiu.data.GrayIntegerImage;
+import net.sourceforge.jiu.data.PixelImage;
+import net.sourceforge.jiu.data.RGB24Image;
+import net.sourceforge.jiu.gui.awt.ToolkitLoader;
+import net.sourceforge.jiu.ops.OperationFailedException;
 
+import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.IOException;
 
 /**
  * File helper methods.
@@ -118,6 +123,10 @@ public class FileUtilities {
                 || ext.equalsIgnoreCase("ppm"); // other palette
     }
 
+    public static boolean inPbmFormat(String ext) {
+        return ext.equalsIgnoreCase("pbm");
+    }
+
     public static String getExtension(File file) {
         String ext = "";
         String name = file.getName();
@@ -128,7 +137,7 @@ public class FileUtilities {
         return ext;
     }
 
-    public static File convertToPnm(File file) throws Exception {
+    public static File convertToPnm(File file) throws IOException, OperationFailedException {
         PixelImage pixelImage = ToolkitLoader.loadViaToolkitOrCodecs(file.getPath(), true, null);
         PNMCodec codec = new PNMCodec();
         String extension = codec.suggestFileExtension(pixelImage);
@@ -140,41 +149,77 @@ public class FileUtilities {
 
         return outputFile;
     }
-/*
-    public static File convertToPnm(File file, String extension) {
-        String conversionProgram = null;
-        if(extension.equalsIgnoreCase("jpg") || extension.equalsIgnoreCase("jpeg")) {
-            conversionProgram = "jpegtopnm";
-        } else if(extension.equalsIgnoreCase("png")) {
-            conversionProgram = "pngtopnm";
-        } else if(extension.equalsIgnoreCase("gif")) {
-            conversionProgram = "giftopnm";
-        }
 
-        if(conversionProgram != null) {
-            try {
-                String name = file.getName().split("[.]")[0] + ".pnm";
-                File newFile = new File(file.getParent(), name);
-//                String[] commandArray = {"cat", file.getPath(), "|", conversionProgram, ">", newFile.getPath()};
-                String[] commandArray = {conversionProgram, file.getPath()};
-//                String command = "cat \"" + file.getPath() + "\" | " + conversionProgram + " > \"" + newFile.getPath() + "\"";
-
-                BufferedReader reader = RuntimeUtility.execute(commandArray);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(newFile));
-                while(reader.ready()) {
-                    writer.write(reader.readLine());
-                    writer.newLine();
-                }
-                reader.close();
-                writer.close();
-                return newFile;
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        } else {
-            throw new RuntimeException("Cannot convert file with extension " + extension);
-        }
+    public static Dimension getDimension(File file) throws IOException, OperationFailedException {
+        PNMCodec codec = new PNMCodec();
+        codec.setFile(file, CodecMode.LOAD);
+        codec.process();
+        PixelImage image = codec.getImage();
+        return new Dimension(image.getWidth(), image.getHeight());
     }
-*/
+
+    public static File convertToPbm(File inputFile, int thresholdPercent) throws IOException, OperationFailedException  {
+        String extension = getExtension(inputFile);
+        if(inPbmFormat(extension)) {
+            return inputFile;
+        }
+
+        File file = inPnmFormat(extension) ? inputFile : convertToPnm(inputFile);
+
+        PNMCodec codec = new PNMCodec();
+        codec.setFile(file, CodecMode.LOAD);
+        codec.process();
+        PixelImage image = codec.getImage();
+
+        if(!(image instanceof RGB24Image)) {
+            PromotionRGB24 promoter = new PromotionRGB24();
+            promoter.setInputImage(image);
+            promoter.process();
+        }
+
+        oldCode();
+        image = convertGreyToBilevel(convertRgbToGrey((RGB24Image)image), thresholdPercent);
+
+        codec = new PNMCodec();
+        codec.setImage(image);
+        String name = file.getName();
+        name = name.substring(0, name.lastIndexOf('.')) + ".pbm";
+        File outputFile = new File(file.getParent(), name);
+        codec.setFile(outputFile, CodecMode.SAVE);
+        codec.process();
+        codec.close();
+
+        return outputFile;
+    }
+
+    private static void oldCode() {
+//        MedianCutQuantizer quantizer = new MedianCutQuantizer();
+//        quantizer.setInputImage(image);
+//        quantizer.setMethodToDetermineRepresentativeColors(MedianCutQuantizer.METHOD_REPR_COLOR_WEIGHTED_AVERAGE);
+//        quantizer.setPaletteSize(2);
+//        quantizer.process();
+//        image = quantizer.getOutputImage();
+//
+//        if(image instanceof RGB24Image || image instanceof Paletted8Image) {
+//            image = convertRgbToGrey(image);
+//        }
+    }
+
+    private static PixelImage convertGreyToBilevel(GrayIntegerImage image, int thresholdPercent) throws OperationFailedException  {
+        ReduceToBilevelThreshold reducer = new ReduceToBilevelThreshold();
+        reducer.setInputImage(image);
+        reducer.setThreshold(image.getMaxSample(0) * thresholdPercent / 100);
+        reducer.process();
+
+        return reducer.getOutputImage();
+    }
+
+    private static GrayIntegerImage convertRgbToGrey(RGB24Image image) throws OperationFailedException  {
+        RGBToGrayConversion rgbtogray = new RGBToGrayConversion();
+        rgbtogray.setInputImage(image);
+//        rgbtogray.setColorWeights(0.33f, 0.33f, 0.33f);
+        rgbtogray.process();
+        return (GrayIntegerImage)rgbtogray.getOutputImage();
+    }
 
 }

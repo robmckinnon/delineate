@@ -120,6 +120,14 @@ public class SettingsPanel implements RenderingListener {
         return command.getCommand();
     }
 
+    public void setHeight(double height) {
+        command.setParameterValue("height", Double.toString(height), false);
+    }
+
+    public void setWidth(double width) {
+        command.setParameterValue("width", Double.toString(width), false);
+    }
+
     public String getBackgroundColor() {
         if(command.getParameterEnabled(Command.BACKGROUND_COLOR_PARAMETER)) {
             return command.getParameterValue(Command.BACKGROUND_COLOR_PARAMETER);

@@ -64,7 +64,8 @@ public class PotraceSvgOptimizer extends SvgOptimizer {
                 SVGGElement groupElement = (SVGGElement)node;
                 String fill = groupElement.getAttribute("fill");
                 String stroke = groupElement.getAttribute("stroke");
-                w.println("<g fill=\"" + fill + "\" stroke=\"" + stroke + "\">");
+                String transform = groupElement.getAttribute("transform");
+                w.println("<g transform=\"" + transform + "\" fill=\"" + fill + "\" stroke=\"" + stroke + "\">");
                 childNodes = groupElement.getChildNodes();
             }
         }

@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
+
 <!-- ======================================================================= -->
 <!-- Ant build file for Delineate.                                           -->
 <!-- Please download and install ant from http://jakarta.apache.org/ant/     -->
 <!-- ======================================================================= -->
 <project name="Delineate" default="run" basedir=".">
   <property name="name" value="delineate"/>
-  <property name="version" value="0.4.2"/>
+  <property name="version" value="0.5"/>
   <property name="package-name" value="${name}-${version}"/>
   <property name="main-class" value="net.sf.delineate.DelineateApplication"/>
 
@@ -65,7 +66,8 @@
  ./lib/batik-xml.jar
  ./lib/batik-script.jar
  ./lib/batik-awt-util.jar
- ./lib/batik-parser.jar"/>
+ ./lib/batik-parser.jar
+ ./lib/jiu.jar"/>
       </manifest>
     </jar>
   </target>
@@ -96,4 +98,5 @@
   </target>
 
 </project>
+
 
