@@ -127,15 +127,15 @@ public class SaveSettingsPanel {
         };
         action.setEnabled(false);
 
-        return GuiUtilities.initButton("Delete settings", DELETE_SETTINGS_ACTION, KeyEvent.VK_D, action, panel);
+        return GuiUtilities.initButton("Delete settings", DELETE_SETTINGS_ACTION, KeyEvent.VK_D, panel, action);
     }
 
     private JButton initLoadButton() {
-        JButton button = GuiUtilities.initButton("Load:", LOAD_SETTINGS_ACTION, KeyEvent.VK_L, new AbstractAction() {
+        JButton button = GuiUtilities.initButton("Load:", LOAD_SETTINGS_ACTION, KeyEvent.VK_L, panel, new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 loadSettingsCombo.requestFocus();
             }
-        }, panel);
+        });
         button.setFocusPainted(false);
         button.setFocusable(false);
         button.setBorderPainted(false);
@@ -145,11 +145,11 @@ public class SaveSettingsPanel {
     }
 
     private JButton initSaveButton() {
-        return GuiUtilities.initButton("Save settings", SAVE_SETTINGS_ACTION, KeyEvent.VK_S, new AbstractAction() {
+        return GuiUtilities.initButton("Save settings", SAVE_SETTINGS_ACTION, KeyEvent.VK_S, panel, new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 saveSettings();
             }
-        }, panel);
+        });
     }
 
     private void saveProperties(Properties properties) {

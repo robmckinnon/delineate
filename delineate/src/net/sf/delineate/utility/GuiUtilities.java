@@ -33,13 +33,17 @@ import java.awt.event.KeyEvent;
  */
 public class GuiUtilities {
 
-    public static JButton initButton(String text, String actionKey, int shortcutKey, AbstractAction action, JComponent component) {
-        setKeyBinding(actionKey, shortcutKey, KeyEvent.CTRL_MASK, action, component);
+    public static JButton initButton(String text, String actionKey, int shortcutKey, int modifiers, JComponent component, AbstractAction action) {
+        setKeyBinding(actionKey, shortcutKey, modifiers, action, component);
 
         JButton button = new JButton(action);
         button.setText(text);
         button.setMnemonic(shortcutKey);
         return button;
+    }
+
+    public static JButton initButton(String text, String actionKey, int shortcutKey, JComponent component, AbstractAction action) {
+        return initButton(text, actionKey, shortcutKey, KeyEvent.CTRL_MASK, component, action);
     }
 
     public static void setKeyBinding(String actionKey, int key, int modifiers, AbstractAction action, JComponent component) {

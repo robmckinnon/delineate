@@ -21,19 +21,16 @@ package net.sf.delineate;
 
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
+import net.sf.delineate.utility.GuiUtilities;
 
 import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import javax.swing.ImageIcon;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -44,7 +41,7 @@ import java.io.IOException;
  * @author robmckinnon@users.sourceforge.net
  */
 public class DelineateApplication {
-    private static final String CONVERT__IMAGE__ACTION = "Convert";
+    private static final String CONVERT_IMAGE_ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
     private SvgViewerController svgViewerController;
 
@@ -91,21 +88,12 @@ public class DelineateApplication {
     }
 
     private JButton initConvertButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
-        JPanel panel = settingsPanel.getPanel();
-        ActionMap actionMap = panel.getActionMap();
-        InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        actionMap.put(CONVERT__IMAGE__ACTION, new AbstractAction() {
+        JButton button = GuiUtilities.initButton("Run", CONVERT_IMAGE_ACTION, KeyEvent.VK_ENTER, 0, settingsPanel.getPanel(), new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 convert(settingsPanel, viewerController);
             }
         });
 
-        KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-        inputMap.put(keyStroke, CONVERT__IMAGE__ACTION);
-
-        JButton button = new JButton(actionMap.get(CONVERT__IMAGE__ACTION));
-        button.setText("Run");
         button.setMnemonic(KeyEvent.VK_R);
         return button;
     }

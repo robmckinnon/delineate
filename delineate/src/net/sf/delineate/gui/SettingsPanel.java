@@ -353,9 +353,9 @@ public class SettingsPanel {
         JButton button = null;
 
         if(name.equals(Command.INPUT_FILE_PARAMETER)) {
-            button = GuiUtilities.initButton(labelName, INPUT_FILE_ACTION, KeyEvent.VK_I, action, panel);
+            button = GuiUtilities.initButton(labelName, INPUT_FILE_ACTION, KeyEvent.VK_I, panel, action);
         } else if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
-            button = GuiUtilities.initButton(labelName, OUTPUT_FILE_ACTION, KeyEvent.VK_O, action, panel);
+            button = GuiUtilities.initButton(labelName, OUTPUT_FILE_ACTION, KeyEvent.VK_O, panel, action);
         }
 
         button.setToolTipText("Browse files");
