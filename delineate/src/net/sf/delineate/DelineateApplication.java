@@ -49,7 +49,7 @@ import java.io.IOException;
  */
 public class DelineateApplication {
     private static final String CONVERT_IMAGE_ACTION = "Convert";
-    private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
+    private static final JFrame frame = new JFrame("Delineate - raster to SVG converter v0.3");
     private SvgViewerController svgViewerController;
 
     public DelineateApplication(String parameterFile) throws Exception {
@@ -83,7 +83,7 @@ public class DelineateApplication {
         frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 30, 800, 712);
+        frame.setBounds(130, 30, 800, 732);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -158,12 +158,12 @@ public class DelineateApplication {
                 viewerController.load("file:" + outputFile);
             } catch(Exception e) {
                 e.printStackTrace();
-                if(e instanceof IOException && e.getMessage().indexOf("autotrace: not found") != -1) {
+                if(e instanceof IOException) {// && e.getMessage().indexOf("autotrace: not found") != -1) {
                     showMessage("You must install AutoTrace to run conversions.\n" +
                         "See INSTALL.txt file for details.", "AutoTrace not installed");
                     System.exit(0);
                 } else {
-                    showMessage("An error occurred, cannot run conversion: " + e.getMessage(), "Error");
+                    showMessage("An error occurred, cannot run conversion: \n" + e.getMessage(), "Error");
                 }
             }
 
