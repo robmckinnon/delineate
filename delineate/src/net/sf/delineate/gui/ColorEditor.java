@@ -57,10 +57,10 @@ public class ColorEditor {
 
     private Color[] colors;
 
-    public ColorEditor(Command command, String initialValue, JComponent parent) {
+    public ColorEditor(Command command, String initialValue, JComponent parent, boolean enabled) {
         this.command = command;
         colorCombo.setEditable(true);
-        colorCombo.setEnabled(false);
+        colorCombo.setEnabled(enabled);
         colorCombo.setName(Command.BACKGROUND_COLOR_PARAMETER);
         colorCombo.setSelectedItem(initialValue);
         ColorComboBoxEditor colorEditor = new ColorComboBoxEditor();

@@ -220,7 +220,7 @@ public class SettingsPanel {
 
         if(xpath.count("range") != 1) {
             labelPanel = initLabelPanel(optional, enabled, null, desc, name);
-            controlComponent = initControlComponent(value, name);
+            controlComponent = initControlComponent(value, name, enabled);
         } else {
             xpath.setXpathPrefix(xpathPrefix + "range/");
             boolean useWholeNumbers = xpath.toBoolean("use-whole-numbers");
@@ -237,10 +237,10 @@ public class SettingsPanel {
         panel.add(controlComponent);
     }
 
-    private JComponent initControlComponent(String value, String name) {
+    private JComponent initControlComponent(String value, String name, boolean enabled) {
         if(value.length() > 0) {
             if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
-                colorEditor = new ColorEditor(command, value, panel);
+                colorEditor = new ColorEditor(command, value, panel, enabled);
                 return colorEditor.getColorCombo();
             } else {
                 setFileSizeText(name, value);
@@ -298,7 +298,7 @@ public class SettingsPanel {
             label.setToolTipText(desc);
             labelComponent = label;
         } else if(isBgColorParameter) {
-            button = initColorChooserButton(labelName);
+            button = initColorChooserButton(labelName, enabled);
             labelComponent = button;
         } else if(isFileParameter) {
             labelComponent = initFileChooserButton(name, labelName);
@@ -318,7 +318,7 @@ public class SettingsPanel {
         return panel;
     }
 
-    private JButton initColorChooserButton(String labelName) {
+    private JButton initColorChooserButton(String labelName, boolean enabled) {
         AbstractAction action = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 colorEditor.chooseColor();
@@ -327,7 +327,7 @@ public class SettingsPanel {
 
         JButton button = GuiUtilities.initButton(labelName, BACKGROUND_COLOR_ACTION, KeyEvent.VK_B, panel, action);
         button.setToolTipText("Choose color");
-        button.setEnabled(false);
+        button.setEnabled(enabled);
 
         return button;
     }

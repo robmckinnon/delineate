@@ -22,25 +22,25 @@ package net.sf.delineate;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.GuiUtilities;
-import net.sf.delineate.utility.ColorUtilities;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import javax.swing.JLabel;
-import javax.swing.JCheckBox;
-import javax.swing.Action;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.Color;
 import java.io.IOException;
 
 /**
@@ -68,13 +68,12 @@ public class DelineateApplication {
         });
 
         JButton button = initConvertButton(settingsPanel, svgViewerController);
-        JPanel panel = initStyleCheckPanel(svgViewerController);
+        JPanel optionsPanel = initOptionsPanel(svgViewerController);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
-        buttonPanel.add(panel);
 
-        JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
+        JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel, optionsPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, svgViewerController.getSvgViewerPanels(), controlPanel);
@@ -89,8 +88,8 @@ public class DelineateApplication {
         frame.setVisible(true);
     }
 
-    private JPanel initStyleCheckPanel(final SvgViewerController viewerController) {
-        JLabel label = new JLabel("extract css styles");
+    private JPanel initOptionsPanel(final SvgViewerController viewerController) {
+        JLabel label = new JLabel("extract style definitions");
         final JCheckBox checkBox = new JCheckBox();
 
         checkBox.addChangeListener(new ChangeListener() {
@@ -99,12 +98,15 @@ public class DelineateApplication {
                 viewerController.setExtractStyles(selected);
             }
         });
-        String tooltip = "Creates style definitions, may reduce output file size.";
+        String tooltip = "Creates SVG style definitions, may reduce output file size if there are many paths and few colors. Use with the color count setting.";
         label.setToolTipText(tooltip);
         checkBox.setToolTipText(tooltip);
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel(new SpringLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Result options"));
         panel.add(label);
         panel.add(checkBox);
+
+        SpringUtilities.makeCompactGrid(panel, 1, 2, 2, 2, 2, 2);
         return panel;
     }
 
@@ -114,11 +116,12 @@ public class DelineateApplication {
 //        return menuBar;
 //    }
 
-    private JPanel createControlPanel(final SettingsPanel settingsPanel, JPanel buttonPanel) {
+    private JPanel createControlPanel(final SettingsPanel settingsPanel, JPanel buttonPanel, JPanel optionsPanel) {
         JPanel controlPanel = new JPanel(new SpringLayout());
         controlPanel.add(settingsPanel.getPanel());
+        controlPanel.add(optionsPanel);
         controlPanel.add(buttonPanel);
-        SpringUtilities.makeCompactGrid(controlPanel, 2, 1, 2, 2, 2, 2);
+        SpringUtilities.makeCompactGrid(controlPanel, 3, 1, 6, 6, 6, 6);
         JPanel controlWrapperPanel = new JPanel();
         controlWrapperPanel.add(controlPanel);
         return controlWrapperPanel;
@@ -183,6 +186,5 @@ public class DelineateApplication {
 
         void setColors(Color[] colors);
     }
-
 
 }
