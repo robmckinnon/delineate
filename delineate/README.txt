@@ -13,35 +13,67 @@ For more information on Delineate, see http://delineate.sourceforge.net
 
 
 =========================
-Installation
+Installing - GNU/Linux
 =========================
 
 1) You will need to install AutoTrace on your machine.
 Downloads and installation instructions can be found at:
 
-http://autotrace.sourceforge.net/
+  http://autotrace.sourceforge.net/
 
+2) You will also need to have Java 1.4.1 or Java 1.4.2 installed:
 
-2) You will also need to have Java 1.4 installed:
+  http://java.sun.com/
 
-http://java.sun.com/
+3) Set your JAVA_HOME variable to the location where you have Java installed.
 
-Set your JAVA_HOME variable to the location where you have Java installed.
-
-
-3) Uncompress the Delineate binaries for your system.
+4) Extract delineate-0.1.tar.gz on to your machine
 
 
 =========================
 Running - GNU/Linux
 =========================
 
+ cd delineate/0.1
+
  chmod a+x delineate.sh
+
  ./delineate.sh
 
 
 =========================
-Running - Windoz
+Installing - Windoze
 =========================
 
- delineate.bat
+1) You will need to install AutoTrace on your machine.
+Downloads and installation instructions can be found at:
+
+  http://autotrace.sourceforge.net/
+
+2) Put the AutoTrace install directory on to your system Path.
+In Windoze XP you can change the path by going to:
+
+  Start->Settings->Control Panel->System->Advanced->Environment Variables
+
+Edit the Path variable, and append the AutoTrace install directory on to the end.
+
+
+2) You will also need to have Java 1.4.1 or Java 1.4.2 installed:
+
+  http://java.sun.com/
+
+3) Set your JAVA_HOME environment variable to the location where you have Java installed.
+In Windoze XP you can add this environement by going to:
+
+  Start->Settings->Control Panel->System->Advanced->Environment Variables
+
+4) Extract delineate-0.1.zip on to your machine
+
+
+=========================
+Running - Windoze
+=========================
+
+  Go to the directory <install dir>/delineate/0.1
+  run delineate.bat
+
