@@ -272,6 +272,10 @@ public class SettingsPanel {
         });
 
         loadSettingsCombo.setSelectedItem(DEFAULT_SETTING_NAME);
+        Dimension size = loadSettingsCombo.getPreferredSize();
+        size.width = 72;
+        loadSettingsCombo.setPreferredSize(size);
+        loadSettingsCombo.setMaximumSize(size);
         return loadSettingsCombo;
     }
 
