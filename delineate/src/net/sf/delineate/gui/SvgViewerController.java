@@ -182,7 +182,6 @@ public class SvgViewerController {
         this.uri = uri;
         System.out.println("loading " + uri);
         svgViewerA.setOptimize(true);
-        svgViewerA.setBackgroundReload(true);
         svgViewerA.setURI(uri);
     }
 
@@ -210,6 +209,10 @@ public class SvgViewerController {
 
     public void setBackgroundColor(String color) {
         svgViewerA.setBackgroundColor(color);
+    }
+
+    public void setCenterlineEnabled(boolean centerlineEnabled) {
+        svgViewerA.setCenterlineEnabled(centerlineEnabled);
     }
 
     private class ScrollListener implements AdjustmentListener {

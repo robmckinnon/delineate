@@ -21,7 +21,6 @@ package net.sf.delineate.gui;
 
 import net.sf.delineate.command.Command;
 import net.sf.delineate.command.Parameter;
-import net.sf.delineate.utility.ColorUtilities;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
 import net.sf.delineate.utility.XPathTool;
@@ -31,7 +30,7 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -41,7 +40,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import javax.swing.JComboBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,7 +49,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -67,14 +64,17 @@ public class SettingsPanel {
 
     private static final String INPUT_FILE_ACTION = "InputFileAction";
     private static final String OUTPUT_FILE_ACTION = "OutputFileAction";
-
-    private JPanel panel;
-    private Command command;
+    private static final String BACKGROUND_COLOR_ACTION = "BackgroundColorAction";
 
     private final Map textFieldMap = new HashMap(5);
-    private Map fileSizeLabelMap = new HashMap(5);
+    private final Map fileSizeLabelMap = new HashMap(5);
     private final Map checkBoxMap = new HashMap(23);
     private final Map spinnerSliderMap = new HashMap(23);
+
+    private final JPanel panel;
+    private Command command;
+    private ColorEditor colorEditor;
+
 
     private final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -90,33 +90,6 @@ public class SettingsPanel {
         }
     };
 
-    private final KeyAdapter colorTextFieldKeyListener = new KeyAdapter() {
-        public void keyReleased(KeyEvent event) {
-            JComboBox combo = (JComboBox)textFieldMap.get(Command.BACKGROUND_COLOR_PARAMETER);
-            JTextField textField = (JTextField)event.getSource();
-            String text = textField.getText();
-
-            if(text.length() == 6) {
-                try {
-                    Color color = ColorUtilities.getColor(text);
-                    combo.addItem(text);
-                    combo.setSelectedItem(text);
-                    textField.setBackground(color);
-                    Color foreground = ColorUtilities.getForeground(color);
-                    textField.setForeground(foreground);
-                    textField.setCaretColor(foreground);
-                    command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, text, false);
-                } catch(Exception e) {
-
-                }
-            } else {
-                textField.setBackground(Color.white);
-                textField.setForeground(Color.black);
-            }
-
-        }
-    };
-
     private final KeyAdapter textFieldKeyListener = new KeyAdapter() {
         public void keyReleased(KeyEvent e) {
             JTextField textField = ((JTextField)e.getSource());
@@ -126,9 +99,10 @@ public class SettingsPanel {
     };
 
 
+
     public SettingsPanel(String parameterFile) throws Exception {
         panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Settings"));
+        panel.setBorder(BorderFactory.createTitledBorder("Conversion settings"));
         panel.add(initContentPane(parameterFile), BorderLayout.NORTH);
 
         SaveSettingsPanel saveSettingsPanel = new SaveSettingsPanel(command);
@@ -266,15 +240,8 @@ public class SettingsPanel {
     private JComponent initControlComponent(String value, String name) {
         if(value.length() > 0) {
             if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
-                JComboBox colorCombo = new JComboBox();
-                colorCombo.setEditable(true);
-                colorCombo.setEnabled(false);
-                colorCombo.setName(name);
-                Component editorComponent = colorCombo.getEditor().getEditorComponent();
-                editorComponent.addKeyListener(colorTextFieldKeyListener);
-                textFieldMap.put(name, colorCombo);
-
-                return colorCombo;
+                colorEditor = new ColorEditor(command, value, panel);
+                return colorEditor.getColorCombo();
             } else {
                 setFileSizeText(name, value);
                 JTextField textField = new JTextField(value);
@@ -331,7 +298,7 @@ public class SettingsPanel {
             label.setToolTipText(desc);
             labelComponent = label;
         } else if(isBgColorParameter) {
-            button = initColorChooserButton(labelName, panel);
+            button = initColorChooserButton(labelName);
             labelComponent = button;
         } else if(isFileParameter) {
             labelComponent = initFileChooserButton(name, labelName);
@@ -351,33 +318,18 @@ public class SettingsPanel {
         return panel;
     }
 
-    private JButton initColorChooserButton(String labelName, final JPanel panel) {
-        JButton button;
-        button = new JButton(labelName);
+    private JButton initColorChooserButton(String labelName) {
+        AbstractAction action = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                colorEditor.chooseColor();
+            }
+        };
+
+        JButton button = GuiUtilities.initButton(labelName, BACKGROUND_COLOR_ACTION, KeyEvent.VK_B, panel, action);
         button.setToolTipText("Choose color");
         button.setEnabled(false);
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                chooseColor(panel);
-            }
-        });
-        return button;
-    }
 
-    private void chooseColor(final JPanel panel) {
-        JComboBox combo = (JComboBox)textFieldMap.get(Command.BACKGROUND_COLOR_PARAMETER);
-        String colorParameter = command.getParameterValue(Command.BACKGROUND_COLOR_PARAMETER);
-        Color initialColor = ColorUtilities.getColor(colorParameter);
-        Color color = JColorChooser.showDialog(panel, "Choose background color", initialColor);
-        if(color != null) {
-            String hexColor = ColorUtilities.getHexColor(color);
-            command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, hexColor, false);
-            combo.addItem(hexColor);
-            combo.setSelectedItem(hexColor);
-            Component editorComponent = combo.getEditor().getEditorComponent();
-            editorComponent.setBackground(color);
-            editorComponent.setForeground(ColorUtilities.getForeground(color));
-        }
+        return button;
     }
 
     private JButton initFileChooserButton(final String name, String labelName) {
@@ -436,7 +388,7 @@ public class SettingsPanel {
         } else if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
             checkBox.addChangeListener(new ChangeListener() {
                 public void stateChanged(ChangeEvent e) {
-                    JComboBox combo = (JComboBox)textFieldMap.get(name);
+                    JComboBox combo = colorEditor.getColorCombo();
                     combo.setEnabled(checkBox.isSelected());
                     button.setEnabled(checkBox.isSelected());
                 }
@@ -470,6 +422,14 @@ public class SettingsPanel {
             model = new SpinnerNumberModel(value, min, max, step);
         }
         return model;
+    }
+
+    public void setColors(Color[] colors) {
+        colorEditor.setColors(colors);
+    }
+
+    public boolean getCenterlineEnabled() {
+        return command.getParameterEnabled(Command.CENTERLINE_PARAMETER);
     }
 
 }

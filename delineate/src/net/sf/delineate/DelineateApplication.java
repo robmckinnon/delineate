@@ -61,6 +61,10 @@ public class DelineateApplication {
                 Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
                 action.setEnabled(true);
             }
+
+            public void setColors(Color[] colors) {
+                settingsPanel.setColors(colors);
+            }
         });
 
         JButton button = initConvertButton(settingsPanel, svgViewerController);
@@ -147,6 +151,7 @@ public class DelineateApplication {
                 process.waitFor();
                 String outputFile = settingsPanel.getOutputFile();
                 viewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
+                viewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
                 viewerController.load("file:" + outputFile);
             } catch(Exception e) {
                 e.printStackTrace();
@@ -175,6 +180,8 @@ public class DelineateApplication {
 
     public static interface ConversionListener {
         void conversionFinished();
+
+        void setColors(Color[] colors);
     }
 
 

@@ -19,8 +19,10 @@
  */
 package net.sf.delineate.gui;
 
-import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.DelineateApplication;
+import net.sf.delineate.utility.ColorUtilities;
+import net.sf.delineate.utility.FileUtilities;
+import org.apache.batik.dom.svg.SVGDOMImplementation;
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
@@ -28,6 +30,7 @@ import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
 import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
@@ -45,6 +48,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.event.AdjustmentListener;
@@ -60,6 +64,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Panel for viewing SVG files.
@@ -85,7 +91,9 @@ public class SvgViewerPanel {
     private DelineateApplication.ConversionListener listener;
     private boolean optimize = false;
     private String background;
-    private boolean backgroundReload = false;
+    private boolean centerlineEnabled;
+    private Map colorToStyleMap = new HashMap();
+    private Set colorSet = new HashSet();
 
     public SvgViewerPanel(String resultText, int modifier) {
         this.modifier = modifier;
@@ -134,6 +142,21 @@ public class SvgViewerPanel {
                     sizeLabel.setText("");
                     setStatus("Loading...");
                 }
+
+                public void documentLoadingCompleted(SVGDocumentLoaderEvent e) {
+                    if(background != null) {
+                        SVGDocument document = e.getSVGDocument();
+                        SVGSVGElement root = document.getRootElement();
+
+                        Element rectangle = document.createElementNS(SVGDOMImplementation.SVG_NAMESPACE_URI, "rect");
+                        rectangle.setAttributeNS(null, "width", root.getWidth().getBaseVal().getValueAsString());
+                        rectangle.setAttributeNS(null, "height", root.getHeight().getBaseVal().getValueAsString());
+                        rectangle.setAttributeNS(null, "fill", '#' + background);
+
+                        Node firstChild = root.getFirstChild();
+                        root.insertBefore(rectangle, firstChild);
+                    }
+                }
             });
 
         svgCanvas.addGVTTreeBuilderListener(new GVTTreeBuilderAdapter() {
@@ -175,10 +198,7 @@ public class SvgViewerPanel {
                 setStatus(resultText + file.getName());
                 sizeLabel.setText(pathCount + " paths - " + fileSize);
 
-                if(background != null && backgroundReload) {
-                    backgroundReload = false;
-                    SvgViewerPanel.this.setURI(svgCanvas.getURI());
-                } else if(listener != null) {
+                if(listener != null) {
                     listener.conversionFinished();
                 }
             }
@@ -193,21 +213,25 @@ public class SvgViewerPanel {
 
             PrintWriter w = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath())));
 
-            Map codeToFillMap = new HashMap();
-            List codeList = new LinkedList();
+            Map styleToColorMap = new HashMap();
+            List styleList = new LinkedList();
 
             if(extractStyles) {
-                codeToFillMap = new HashMap();
-                codeList = new LinkedList();
+                styleToColorMap = new HashMap();
+                styleList = new LinkedList();
             }
 
             SVGSVGElement rootElement = getSvgDocument().getRootElement();
             writeDocumentStart(w, rootElement);
-            w.println("<g stroke=\"none\">");
-            pathCount = writePaths(rootElement, codeList, codeToFillMap, w);
+            if(centerlineEnabled) {
+                w.println("<g fill=\"none\">");
+            } else {
+                w.println("<g stroke=\"none\">");
+            }
+            pathCount = writePaths(rootElement, styleList, styleToColorMap, w);
             w.println("</g>");
             if(extractStyles) {
-                writeStyles(w, codeList, codeToFillMap);
+                writeStyles(w, styleList, styleToColorMap);
             }
 
             w.println("</svg>");
@@ -231,7 +255,11 @@ public class SvgViewerPanel {
             String name = (String)iterator.next();
             w.print(".");
             w.print(name);
-            w.print("{fill:#");
+            if(centerlineEnabled) {
+                w.print("{stroke:#");
+            } else {
+                w.print("{fill:#");
+            }
             w.print(codeToFillMap.get(name).toString());
             w.println("}");
         }
@@ -239,11 +267,16 @@ public class SvgViewerPanel {
         w.println("</defs>");
     }
 
-    private int writePaths(SVGSVGElement rootElement, List codeList, Map codeToFillMap, PrintWriter w) {
+    private int writePaths(SVGSVGElement rootElement, List styleList, Map styleToColorMap, PrintWriter w) {
         NodeList childNodes = rootElement.getChildNodes();
-        Map fillToCodeMap = new HashMap();
         int pathCount = 0;
         int styleCount = 0;
+        String colorText = null;
+        colorSet.clear();
+
+        if(extractStyles) {
+            colorToStyleMap.clear();
+        }
 
         for(int i = 0; i < childNodes.getLength(); i++) {
             Node node = childNodes.item(i);
@@ -251,22 +284,36 @@ public class SvgViewerPanel {
             if(node instanceof SVGPathElement) {
                 pathCount++;
                 SVGPathElement path = (SVGPathElement)node;
-                String fill = path.getAttribute("style").substring(6, 12);
+
+                if(centerlineEnabled) {
+                    colorText = path.getAttribute("style").substring(8, 14);
+                } else {
+                    colorText = path.getAttribute("style").substring(6, 12);
+                }
+
+                if(pathCount <= 279 && !colorSet.contains(colorText)) {
+                    Color color = ColorUtilities.getColor(colorText);
+                    colorSet.add(color);
+                }
 
                 if(extractStyles) {
-                    if(!fillToCodeMap.containsKey(fill)) {
-                        String code = getCodeString(styleCount);
-                        codeList.add(code);
-                        fillToCodeMap.put(fill, code);
-                        codeToFillMap.put(code, fill);
+                    if(!colorToStyleMap.containsKey(colorText)) {
+                        String style = getStyleName(styleCount);
+                        styleList.add(style);
+                        colorToStyleMap.put(colorText, style);
+                        styleToColorMap.put(style, colorText);
                         styleCount++;
                     }
 
                     w.print("<path class=\"");
-                    w.print(fillToCodeMap.get(fill).toString());
+                    w.print((String)colorToStyleMap.get(colorText));
                 } else {
-                    w.print("<path fill=\"#");
-                    w.print(fill);
+                    if(centerlineEnabled) {
+                        w.print("<path stroke=\"#");
+                    } else {
+                        w.print("<path fill=\"#");
+                    }
+                    w.print(colorText);
                 }
 
                 w.print("\" d=\"");
@@ -287,6 +334,9 @@ public class SvgViewerPanel {
                 w.println("\"/>");
             }
         }
+
+        Color[] colors = (Color[])colorSet.toArray(new Color[colorSet.size()]);
+        listener.setColors(colors);
 
         return pathCount;
     }
@@ -319,7 +369,7 @@ public class SvgViewerPanel {
         w.print("\"");
     }
 
-    private String getCodeString(int i) {
+    private String getStyleName(int i) {
         int first = i / 51;
 
         if(first == 0) {
@@ -329,7 +379,7 @@ public class SvgViewerPanel {
                 return (new Character((char)(i + 39))).toString();
             }
         } else {
-            return getCodeString(first - 1) + getCodeString(i % 51);
+            return getStyleName(first - 1) + getStyleName(i % 51);
         }
     }
 
@@ -435,8 +485,8 @@ public class SvgViewerPanel {
         background = color;
     }
 
-    public void setBackgroundReload(boolean reload) {
-        backgroundReload = reload;
+    public void setCenterlineEnabled(boolean enabled) {
+        centerlineEnabled = enabled;
     }
 
     private class PopupListener extends MouseAdapter {

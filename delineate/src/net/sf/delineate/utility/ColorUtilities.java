@@ -20,6 +20,8 @@
 package net.sf.delineate.utility;
 
 import java.awt.Color;
+import java.util.Comparator;
+import java.util.Arrays;
 
 /**
  * Colour utility methods.
@@ -29,11 +31,20 @@ public class ColorUtilities {
 
     private static final int THRESHOLD = 3 * Integer.parseInt("66", 16) + 1;
 
+    private static final Comparator comparator = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            Color color = (Color)o1;
+            Color otherColor = (Color)o2;
+
+            return color.getRGB() - otherColor.getRGB();
+        }
+    };
+
     public static Color getColor(String hexColor) {
         if(hexColor == null) {
             return null;
         }
-        
+
         int red = Integer.parseInt(hexColor.substring(0, 2), 16);
         int green = Integer.parseInt(hexColor.substring(2, 4), 16);
         int blue = Integer.parseInt(hexColor.substring(4), 16);
@@ -47,7 +58,7 @@ public class ColorUtilities {
         int blue = color.getBlue();
         int colorInt = red + green + blue;
 
-        if(colorInt < THRESHOLD && green <= 153 && red <= 204) {
+        if((colorInt < THRESHOLD && green <= 153 && red <= 204) || (red < 112 && blue < 112 && green < 112)) {
             return Color.lightGray;
         } else {
             return Color.black;
@@ -71,6 +82,10 @@ public class ColorUtilities {
         }
 
         return hex;
+    }
+
+    public static void sortColors(Color[] colors) {
+        Arrays.sort(colors, comparator);        
     }
 
 }
