@@ -22,6 +22,7 @@ package net.sf.delineate;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.GuiUtilities;
+import net.sf.delineate.utility.ColorUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -32,8 +33,14 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
+import javax.swing.JLabel;
+import javax.swing.JCheckBox;
+import javax.swing.Action;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.Color;
 import java.io.IOException;
 
 /**
@@ -48,12 +55,20 @@ public class DelineateApplication {
     public DelineateApplication(String parameterFile) throws Exception {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
-        svgViewerController = new SvgViewerController();
+        svgViewerController = new SvgViewerController(new ConversionListener() {
+            public void conversionFinished() {
+                settingsPanel.updateFileSize();
+                Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
+                action.setEnabled(true);
+            }
+        });
 
         JButton button = initConvertButton(settingsPanel, svgViewerController);
+        JPanel panel = initStyleCheckPanel(svgViewerController);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
+        buttonPanel.add(panel);
 
         JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
@@ -68,6 +83,25 @@ public class DelineateApplication {
         frame.setBounds(130, 30, 800, 712);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+    }
+
+    private JPanel initStyleCheckPanel(final SvgViewerController viewerController) {
+        JLabel label = new JLabel("extract css styles");
+        final JCheckBox checkBox = new JCheckBox();
+
+        checkBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                boolean selected = checkBox.isSelected();
+                viewerController.setExtractStyles(selected);
+            }
+        });
+        String tooltip = "Creates style definitions, may reduce output file size.";
+        label.setToolTipText(tooltip);
+        checkBox.setToolTipText(tooltip);
+        JPanel panel = new JPanel();
+        panel.add(label);
+        panel.add(checkBox);
+        return panel;
     }
 
 //    private JMenuBar createMenuBar(final SvgViewerController svgViewerController) {
@@ -99,6 +133,8 @@ public class DelineateApplication {
 
     private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         if(settingsPanel.inputFileExists()) {
+            Action action = settingsPanel.getPanel().getActionMap().get(CONVERT_IMAGE_ACTION);
+            action.setEnabled(false);
             svgViewerController.setStatus("Converting...");
 
             viewerController.movePreviousSvg();
@@ -110,8 +146,8 @@ public class DelineateApplication {
                 Process process = Runtime.getRuntime().exec(command);
                 process.waitFor();
                 String outputFile = settingsPanel.getOutputFile();
+                viewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
                 viewerController.load("file:" + outputFile);
-                settingsPanel.updateFileSize();
             } catch(Exception e) {
                 e.printStackTrace();
                 if(e instanceof IOException && e.getMessage().indexOf("autotrace: not found") != -1) {
@@ -122,6 +158,7 @@ public class DelineateApplication {
                     showMessage("An error occurred, cannot run conversion: " + e.getMessage(), "Error");
                 }
             }
+
         } else {
             showMessage("Input file does not exist.", "Invalid input file");
             settingsPanel.selectInputTextField();
@@ -134,6 +171,10 @@ public class DelineateApplication {
 
     public static void main(String args[]) throws Exception {
         new DelineateApplication(args[0]);
+    }
+
+    public static interface ConversionListener {
+        void conversionFinished();
     }
 
 

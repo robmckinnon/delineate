@@ -27,13 +27,33 @@ import java.awt.Color;
  */
 public class ColorUtilities {
 
+    private static final int THRESHOLD = 3 * Integer.parseInt("66", 16) + 1;
+
     public static Color getColor(String hexColor) {
+        if(hexColor == null) {
+            return null;
+        }
+        
         int red = Integer.parseInt(hexColor.substring(0, 2), 16);
         int green = Integer.parseInt(hexColor.substring(2, 4), 16);
         int blue = Integer.parseInt(hexColor.substring(4), 16);
 
         return new Color(red, green, blue);
     }
+
+    public static Color getForeground(Color color) {
+        int red = color.getRed();
+        int green = color.getGreen();
+        int blue = color.getBlue();
+        int colorInt = red + green + blue;
+
+        if(colorInt < THRESHOLD && green <= 153 && red <= 204) {
+            return Color.lightGray;
+        } else {
+            return Color.black;
+        }
+    }
+
 
     public static String getHexColor(Color color) {
         StringBuffer buffer = new StringBuffer();

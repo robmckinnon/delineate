@@ -99,6 +99,10 @@ public class Command {
         }
     }
 
+    public boolean getParameterEnabled(String name) {
+        return getParameter(name).enabled;    
+    }
+
     public String getParameterValue(String name) {
         return getParameter(name).value;
     }

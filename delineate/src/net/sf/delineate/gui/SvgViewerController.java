@@ -20,6 +20,7 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
+import net.sf.delineate.DelineateApplication;
 import org.apache.batik.swing.JSVGCanvas;
 import org.w3c.dom.Document;
 
@@ -35,6 +36,7 @@ import javax.swing.KeyStroke;
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
 import java.awt.Event;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
@@ -54,7 +56,7 @@ public class SvgViewerController {
 
     private JPanel panel = new JPanel(new BorderLayout());
 
-    public SvgViewerController() {
+    public SvgViewerController(DelineateApplication.ConversionListener listener) {
         svgViewerA = new SvgViewerPanel("Result: ", InputEvent.CTRL_MASK);
         svgViewerB = new SvgViewerPanel("Previous result: ", InputEvent.CTRL_MASK + InputEvent.SHIFT_MASK);
 
@@ -63,17 +65,18 @@ public class SvgViewerController {
         splitPane.setDividerLocation(0.5);
         splitPane.setResizeWeight(0.5);
 
-        installListeners();
+        installListeners(listener);
         installActions();
 
         panel.add(splitPane);
     }
 
-    private void installListeners() {
+    private void installListeners(DelineateApplication.ConversionListener listener) {
         ScrollListener scrollListenerA = new ScrollListener(svgViewerB.getHorizontalScrollBar(), svgViewerB.getVerticalScrollBar());
         ScrollListener scrollListenerB = new ScrollListener(svgViewerA.getHorizontalScrollBar(), svgViewerA.getVerticalScrollBar());
 
         svgViewerA.addAdjustmentListener(scrollListenerA);
+        svgViewerA.addConversionListener(listener);
         svgViewerB.addAdjustmentListener(scrollListenerB);
     }
 
@@ -169,19 +172,23 @@ public class SvgViewerController {
             File previousFile = new File(file.getParent(), file.getName() + '~');
             previousFile.delete();
             file.renameTo(previousFile);
-            svgViewerB.setURI(uri + '~');
+
+            svgViewerB.setPathCount(svgViewerA.getPathCount());
+            svgViewerB.setSvgDocument(uri + '~', svgViewerA.getSvgDocument());
         }
     }
 
     public void load(String uri) {
         this.uri = uri;
         System.out.println("loading " + uri);
+        svgViewerA.setOptimize(true);
+        svgViewerA.setBackgroundReload(true);
         svgViewerA.setURI(uri);
     }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Batik");
-        SvgViewerController app = new SvgViewerController();
+        SvgViewerController app = new SvgViewerController(null);
         frame.setContentPane(app.getSvgViewerPanels());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -195,6 +202,14 @@ public class SvgViewerController {
 
     public Document getSvgDocument() {
         return svgViewerA.getSvgDocument();
+    }
+
+    public void setExtractStyles(boolean extractStyles) {
+        svgViewerA.setExtractStyles(extractStyles);
+    }
+
+    public void setBackgroundColor(String color) {
+        svgViewerA.setBackgroundColor(color);
     }
 
     private class ScrollListener implements AdjustmentListener {

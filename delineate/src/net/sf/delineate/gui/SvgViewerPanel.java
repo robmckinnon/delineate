@@ -20,6 +20,7 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
+import net.sf.delineate.DelineateApplication;
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
@@ -27,7 +28,6 @@ import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
 import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
@@ -46,8 +46,8 @@ import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.EventQueue;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.BufferedWriter;
@@ -57,6 +57,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Panel for viewing SVG files.
@@ -76,6 +79,13 @@ public class SvgViewerPanel {
     private JPanel viewerPanel;
     private ActionMap controllerActionMap;
     private final ViewSourceAction viewSourceAction = new ViewSourceAction();
+    private String uri;
+    private boolean extractStyles = false;
+    private int pathCount = 0;
+    private DelineateApplication.ConversionListener listener;
+    private boolean optimize = false;
+    private String background;
+    private boolean backgroundReload = false;
 
     public SvgViewerPanel(String resultText, int modifier) {
         this.modifier = modifier;
@@ -92,6 +102,14 @@ public class SvgViewerPanel {
     public void closeViewSourceFrame() {
         viewSourceAction.closeFrame();
         viewSourceAction.setSourceUrl(null);
+    }
+
+    public int getPathCount() {
+        return pathCount;
+    }
+
+    public void setPathCount(int pathCount) {
+        this.pathCount = pathCount;
     }
 
     private void installActions() {
@@ -131,119 +149,193 @@ public class SvgViewerPanel {
 
 
             public void gvtRenderingCompleted(GVTTreeRendererEvent e) {
-                String uri = svgCanvas.getURI();
-                File file = FileUtilities.getFile(uri);
-                String fileSize = FileUtilities.getFileSize(file);
-                setStatus(resultText + file.getName());
-                sizeLabel.setText(fileSize);
+                final File file = FileUtilities.getFile(uri);
+
+                if(optimize) {
+                    setStatus("Optimizing...");
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            optimize(file);
+                            optimize = false;
+                            finishConversion(file, resultText);
+                        }
+                    });
+                } else {
+                    finishConversion(file, resultText);
+                }
+            }
+
+            private void finishConversion(File file, String resultText) {
                 ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
-                viewSourceAction.setSourceUrl(svgCanvas.getSVGDocument().getURL());
+                viewSourceAction.setSourceUrl(uri);
                 Container ancestor = svgCanvas.getTopLevelAncestor();
                 viewSourceAction.setLocation(ancestor.getX(), ancestor.getY());
-                if(modifier == InputEvent.CTRL_MASK) {
-                    optimize(file);
+
+                String fileSize = FileUtilities.getFileSize(file);
+                setStatus(resultText + file.getName());
+                sizeLabel.setText(pathCount + " paths - " + fileSize);
+
+                if(background != null && backgroundReload) {
+                    backgroundReload = false;
+                    SvgViewerPanel.this.setURI(svgCanvas.getURI());
+                } else if(listener != null) {
+                    listener.conversionFinished();
                 }
             }
         });
 
     }
 
+
     private void optimize(File file) {
-        long start = System.currentTimeMillis();
-        SVGDocument svgDocument = (SVGDocument)getSvgDocument();
+        try {
+            long start = System.currentTimeMillis();
 
-        SVGSVGElement rootElement = svgDocument.getRootElement();
+            PrintWriter w = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath())));
+
+            Map codeToFillMap = new HashMap();
+            List codeList = new LinkedList();
+
+            if(extractStyles) {
+                codeToFillMap = new HashMap();
+                codeList = new LinkedList();
+            }
+
+            SVGSVGElement rootElement = getSvgDocument().getRootElement();
+            writeDocumentStart(w, rootElement);
+            w.println("<g stroke=\"none\">");
+            pathCount = writePaths(rootElement, codeList, codeToFillMap, w);
+            w.println("</g>");
+            if(extractStyles) {
+                writeStyles(w, codeList, codeToFillMap);
+            }
+
+            w.println("</svg>");
+            w.flush();
+            w.close();
+
+            System.out.println("optimizing took " + (System.currentTimeMillis() - start));
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeStyles(PrintWriter w, List codeList, Map codeToFillMap) {
+        w.println("<defs>");
+        w.println("<style type=\"text/css\"><![CDATA[");
+
+        Iterator iterator = codeList.iterator();
+
+        while(iterator.hasNext()) {
+            String name = (String)iterator.next();
+            w.print(".");
+            w.print(name);
+            w.print("{fill:#");
+            w.print(codeToFillMap.get(name).toString());
+            w.println("}");
+        }
+        w.println("]]></style>");
+        w.println("</defs>");
+    }
+
+    private int writePaths(SVGSVGElement rootElement, List codeList, Map codeToFillMap, PrintWriter w) {
         NodeList childNodes = rootElement.getChildNodes();
-        HashMap fillMap = new HashMap();
-        HashMap classMap = new HashMap();
-
-        int count = 0;
+        Map fillToCodeMap = new HashMap();
+        int pathCount = 0;
+        int styleCount = 0;
 
         for(int i = 0; i < childNodes.getLength(); i++) {
             Node node = childNodes.item(i);
 
             if(node instanceof SVGPathElement) {
+                pathCount++;
                 SVGPathElement path = (SVGPathElement)node;
                 String fill = path.getAttribute("style").substring(6, 12);
 
-                if(!fillMap.containsKey(fill)) {
-                    String name = "d" + Integer.toHexString(count);
-                    fillMap.put(fill, name);
-                    classMap.put(name, fill);
-                    count++;
+                if(extractStyles) {
+                    if(!fillToCodeMap.containsKey(fill)) {
+                        String code = getCodeString(styleCount);
+                        codeList.add(code);
+                        fillToCodeMap.put(fill, code);
+                        codeToFillMap.put(code, fill);
+                        styleCount++;
+                    }
+
+                    w.print("<path class=\"");
+                    w.print(fillToCodeMap.get(fill).toString());
+                } else {
+                    w.print("<path fill=\"#");
+                    w.print(fill);
                 }
+
+                w.print("\" d=\"");
+                String pathText = path.getAttribute("d");
+                int index = pathText.length() - 1;
+                char c = pathText.charAt(index);
+
+                if(c == 'z') {
+                    do {
+                        c = pathText.charAt(--index);
+                    } while(Character.isDigit(c) || Character.isWhitespace(c));
+
+                    if(c == 'L') {
+                        pathText = pathText.substring(0, index) + 'z';
+                    }
+                }
+                w.print(pathText);
+                w.println("\"/>");
             }
         }
 
-        System.out.println("took " + (System.currentTimeMillis() - start));
+        return pathCount;
+    }
 
-        try {
-            PrintWriter w = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath() + '!')));
-            w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
-            w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
+    private void writeDocumentStart(PrintWriter w, SVGSVGElement rootElement) {
+        String width = rootElement.getWidth().getBaseVal().getValueAsString();
+        String height = rootElement.getHeight().getBaseVal().getValueAsString();
 
-            w.print("<svg width=\"");
-            w.print(rootElement.getWidth().getBaseVal().getValueAsString());
-            w.print("\" height=\"");
-            w.print(rootElement.getHeight().getBaseVal().getValueAsString());
-            w.println("\">");
+        w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
+        w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
 
-            w.println("<defs>");
-            w.println("<style type=\"text/css\"><![CDATA[");
+        w.print("<svg ");
+        writeWidthAndHeight(w, width, height);
+        w.println(">");
 
-            Iterator iterator = classMap.keySet().iterator();
-
-            while(iterator.hasNext()) {
-                String name = (String)iterator.next();
-                w.print(".");
-                w.print(name);
-                w.print("{fill:#");
-                w.print(classMap.get(name).toString());
-                w.println("}");
-            }
-            w.println("]]></style>");
-            w.println("</defs>");
-
-            for(int i = 0; i < childNodes.getLength(); i++) {
-                Node node = childNodes.item(i);
-
-                if(node instanceof SVGPathElement) {
-                    SVGPathElement path = (SVGPathElement)node;
-                    String fill = path.getAttribute("style").substring(6, 12);
-
-                    w.print("<path class=\"");
-                    w.print(fillMap.get(fill).toString());
-                    w.print("\" d=\"");
-                    String pathText = path.getAttribute("d");
-                    int index = pathText.length() - 1;
-                    char c = pathText.charAt(index);
-
-                    if(c == 'z') {
-                        do {
-                            c = pathText.charAt(--index);
-                        } while(Character.isDigit(c) || Character.isWhitespace(c));
-
-                        if(c == 'L') {
-                            pathText = pathText.substring(0, index) + 'z';
-                        }
-                    }
-                    w.print(pathText);
-                    w.println("\"/>");
-                }
-            }
-            w.println("</svg>");
-
-            w.flush();
-            w.close();
-
-        } catch(IOException e) {
-            e.printStackTrace();  //To change body of catch statement use Options | File Templates.
+        if(background != null) {
+            w.print("<rect fill=\"#");
+            w.print(background);
+            w.print("\" ");
+            writeWidthAndHeight(w, width, height);
+            w.println("/>");
         }
     }
 
+    private void writeWidthAndHeight(PrintWriter w, String width, String height) {
+        w.print("width=\"");
+        w.print(width);
+        w.print("\" height=\"");
+        w.print(height);
+        w.print("\"");
+    }
+
+    private String getCodeString(int i) {
+        int first = i / 51;
+
+        if(first == 0) {
+            if(i < 26) {
+                return (new Character((char)(i + 97))).toString();
+            } else {
+                return (new Character((char)(i + 39))).toString();
+            }
+        } else {
+            return getCodeString(first - 1) + getCodeString(i % 51);
+        }
+    }
 
     public void setStatus(String text) {
         statusLabel.setText(text);
+        statusLabel.repaint();
     }
 
     public Action getAction(String actionKey) {
@@ -251,8 +343,13 @@ public class SvgViewerPanel {
     }
 
     public void setURI(String uri) {
-        svgCanvas.setSVGDocument(null);  // hack to prevent problem loading relative URI
+        setSvgDocument(uri, null);  // hack to prevent problem loading relative URI
         svgCanvas.setURI(uri);
+    }
+
+    public void setSvgDocument(String uri, SVGDocument svgDocument) {
+        this.uri = uri;
+        svgCanvas.setSVGDocument(svgDocument);
     }
 
     public JScrollBar getHorizontalScrollBar() {
@@ -318,8 +415,28 @@ public class SvgViewerPanel {
         }
     }
 
-    public Document getSvgDocument() {
+    public SVGDocument getSvgDocument() {
         return svgCanvas.getSVGDocument();
+    }
+
+    public void setExtractStyles(boolean extractStyles) {
+        this.extractStyles = extractStyles;
+    }
+
+    public void addConversionListener(DelineateApplication.ConversionListener listener) {
+        this.listener = listener;
+    }
+
+    public void setOptimize(boolean optimize) {
+        this.optimize = optimize;
+    }
+
+    public void setBackgroundColor(String color) {
+        background = color;
+    }
+
+    public void setBackgroundReload(boolean reload) {
+        backgroundReload = reload;
     }
 
     private class PopupListener extends MouseAdapter {
@@ -346,7 +463,6 @@ public class SvgViewerPanel {
                 } else {
                     setActionsEnabled(true);
                     ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
-                    viewSourceAction.setSourceUrl(svgDocument.getURL());
                     viewSourceAction.setLocation(e.getX(), e.getY());
                 }
 

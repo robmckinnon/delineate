@@ -41,6 +41,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
+import javax.swing.JComboBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
@@ -89,6 +90,33 @@ public class SettingsPanel {
         }
     };
 
+    private final KeyAdapter colorTextFieldKeyListener = new KeyAdapter() {
+        public void keyReleased(KeyEvent event) {
+            JComboBox combo = (JComboBox)textFieldMap.get(Command.BACKGROUND_COLOR_PARAMETER);
+            JTextField textField = (JTextField)event.getSource();
+            String text = textField.getText();
+
+            if(text.length() == 6) {
+                try {
+                    Color color = ColorUtilities.getColor(text);
+                    combo.addItem(text);
+                    combo.setSelectedItem(text);
+                    textField.setBackground(color);
+                    Color foreground = ColorUtilities.getForeground(color);
+                    textField.setForeground(foreground);
+                    textField.setCaretColor(foreground);
+                    command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, text, false);
+                } catch(Exception e) {
+
+                }
+            } else {
+                textField.setBackground(Color.white);
+                textField.setForeground(Color.black);
+            }
+
+        }
+    };
+
     private final KeyAdapter textFieldKeyListener = new KeyAdapter() {
         public void keyReleased(KeyEvent e) {
             JTextField textField = ((JTextField)e.getSource());
@@ -116,21 +144,34 @@ public class SettingsPanel {
         return command.getCommand();
     }
 
+    public String getBackgroundColor() {
+        if(command.getParameterEnabled(Command.BACKGROUND_COLOR_PARAMETER)) {
+            return command.getParameterValue(Command.BACKGROUND_COLOR_PARAMETER);
+        } else {
+            return null;
+        }
+    }
+
     public boolean inputFileExists() {
-        String inputFile = command.getParameterValue("input-file");
+        String inputFile = command.getParameterValue(Command.INPUT_FILE_PARAMETER);
         File file = new File(inputFile);
 
         return file.isFile();
     }
 
     public String getOutputFile() {
-        return command.getParameterValue("output-file");
+        return command.getParameterValue(Command.OUTPUT_FILE_PARAMETER);
     }
 
     public void selectInputTextField() {
-        JTextField textField = getTextField("input-file");
+        JTextField textField = getTextField(Command.INPUT_FILE_PARAMETER);
         textField.selectAll();
         textField.requestFocus();
+    }
+
+    public void updateFileSize() {
+        String file = command.getParameterValue(Command.OUTPUT_FILE_PARAMETER);
+        setFileSizeText(Command.OUTPUT_FILE_PARAMETER, file);
     }
 
     private JPanel initContentPane(String parameterFile) throws ParserConfigurationException, IOException, SAXException, TransformerException {
@@ -224,23 +265,27 @@ public class SettingsPanel {
 
     private JComponent initControlComponent(String value, String name) {
         if(value.length() > 0) {
-            boolean isFileParameter = name.endsWith("file");
-            if(isFileParameter) {
-                setFileSizeText(name, value);
-            }
-            JTextField textField = new JTextField(value);
-            textField.setName(name);
-            textField.setColumns(15);
-
-            textField.addKeyListener(textFieldKeyListener);
-
-            textFieldMap.put(name, textField);
-
             if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
-                textField.setEnabled(false);
+                JComboBox colorCombo = new JComboBox();
+                colorCombo.setEditable(true);
+                colorCombo.setEnabled(false);
+                colorCombo.setName(name);
+                Component editorComponent = colorCombo.getEditor().getEditorComponent();
+                editorComponent.addKeyListener(colorTextFieldKeyListener);
+                textFieldMap.put(name, colorCombo);
+
+                return colorCombo;
+            } else {
+                setFileSizeText(name, value);
+                JTextField textField = new JTextField(value);
+                textField.setName(name);
+                textField.setColumns(15);
+                textField.addKeyListener(textFieldKeyListener);
+                textFieldMap.put(name, textField);
+
+                return textField;
             }
 
-            return textField;
         } else {
             return new JLabel("");
         }
@@ -320,15 +365,18 @@ public class SettingsPanel {
     }
 
     private void chooseColor(final JPanel panel) {
-        JTextField textField = getTextField(Command.BACKGROUND_COLOR_PARAMETER);
+        JComboBox combo = (JComboBox)textFieldMap.get(Command.BACKGROUND_COLOR_PARAMETER);
         String colorParameter = command.getParameterValue(Command.BACKGROUND_COLOR_PARAMETER);
         Color initialColor = ColorUtilities.getColor(colorParameter);
         Color color = JColorChooser.showDialog(panel, "Choose background color", initialColor);
         if(color != null) {
             String hexColor = ColorUtilities.getHexColor(color);
             command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, hexColor, false);
-            textField.setText(hexColor);
-            textField.setBackground(color);
+            combo.addItem(hexColor);
+            combo.setSelectedItem(hexColor);
+            Component editorComponent = combo.getEditor().getEditorComponent();
+            editorComponent.setBackground(color);
+            editorComponent.setForeground(ColorUtilities.getForeground(color));
         }
     }
 
@@ -362,11 +410,6 @@ public class SettingsPanel {
         return button;
     }
 
-    public void updateFileSize() {
-        String file = command.getParameterValue(Command.OUTPUT_FILE_PARAMETER);
-        setFileSizeText(Command.OUTPUT_FILE_PARAMETER, file);
-    }
-
     private void setFileSizeText(final String name, String filePath) {
         JLabel label = (JLabel)fileSizeLabelMap.get(name);
 
@@ -393,8 +436,8 @@ public class SettingsPanel {
         } else if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
             checkBox.addChangeListener(new ChangeListener() {
                 public void stateChanged(ChangeEvent e) {
-                    JTextField textField = getTextField(Command.BACKGROUND_COLOR_PARAMETER);
-                    textField.setEnabled(checkBox.isSelected());
+                    JComboBox combo = (JComboBox)textFieldMap.get(name);
+                    combo.setEnabled(checkBox.isSelected());
                     button.setEnabled(checkBox.isSelected());
                 }
             });
