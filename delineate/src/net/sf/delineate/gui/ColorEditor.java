@@ -136,11 +136,21 @@ public class ColorEditor {
         Color color = colorPanel.getColorSelectionModel().getSelectedColor();
         if(color != null) {
             String colorText = ColorUtilities.getHexColor(color);
+            setColor(colorText);
+        }
+    }
+
+    public void setColor(String colorText) {
+        try {
+            ColorUtilities.getColor(colorText);
+
             if(!colorSet.contains(colorText)) {
                 colorCombo.insertItemAt(colorText, 0);
                 colorSet.add(colorText);
             }
             colorCombo.setSelectedItem(colorText);
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
 

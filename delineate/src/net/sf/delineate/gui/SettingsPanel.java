@@ -165,15 +165,20 @@ public class SettingsPanel {
 
             public void valueChanged(Parameter parameter) {
                 String name = parameter.getName();
-                JTextField textField = (JTextField)textFieldMap.get(name);
-                if(textField != null) {
-                    String path = parameter.getValue();
-                    textField.setText(path);
-                }
 
-                SpinnerSlider spinnerSlider = (SpinnerSlider)spinnerSliderMap.get(name);
-                if(spinnerSlider != null) {
-                    spinnerSlider.setValue(parameter.getValue());
+                if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
+                    colorEditor.setColor(parameter.getValue());
+                } else {
+                    JTextField textField = (JTextField)textFieldMap.get(name);
+                    if(textField != null) {
+                        String path = parameter.getValue();
+                        textField.setText(path);
+                    }
+
+                    SpinnerSlider spinnerSlider = (SpinnerSlider)spinnerSliderMap.get(name);
+                    if(spinnerSlider != null) {
+                        spinnerSlider.setValue(parameter.getValue());
+                    }
                 }
             }
         });
