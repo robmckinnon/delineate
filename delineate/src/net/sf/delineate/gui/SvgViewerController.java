@@ -75,9 +75,10 @@ public class SvgViewerController {
     }
 
     private void installActions() {
-        addAction("Zoom in", JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_PLUS, KeyEvent.CTRL_MASK, true);
-        addAction(null, JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_EQUALS, KeyEvent.CTRL_MASK, false);
-        addAction("Zoom out", JSVGCanvas.ZOOM_OUT_ACTION, KeyEvent.VK_MINUS, KeyEvent.CTRL_MASK, true);
+//        int mask = KeyEvent.CTRL_MASK;
+        int mask = 0;
+        addAction("Zoom in", JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_EQUALS, mask, false);
+        addAction("Zoom out", JSVGCanvas.ZOOM_OUT_ACTION, KeyEvent.VK_MINUS, mask, true);
         addSeparator();
 
         addAction(null, JSVGCanvas.SCROLL_RIGHT_ACTION, KeyEvent.VK_RIGHT, 0, false);
@@ -91,11 +92,11 @@ public class SvgViewerController {
         addAction("Scroll down", JSVGCanvas.FAST_SCROLL_DOWN_ACTION, KeyEvent.VK_DOWN, KeyEvent.SHIFT_MASK, true);
         addSeparator();
 
-        addAction("Reset", JSVGCanvas.RESET_TRANSFORM_ACTION, KeyEvent.VK_R, KeyEvent.CTRL_MASK, true);
+        addAction("Reset", JSVGCanvas.RESET_TRANSFORM_ACTION, KeyEvent.VK_R, mask, true);
         addSeparator();
 
-        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, KeyEvent.CTRL_MASK, svgViewerA);
-        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, KeyEvent.CTRL_MASK + KeyEvent.SHIFT_MASK, svgViewerB);
+        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, mask, svgViewerA);
+        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, mask + KeyEvent.SHIFT_MASK, svgViewerB);
 
         svgViewerA.setControllerActionMap(panel.getActionMap());
         svgViewerB.setControllerActionMap(panel.getActionMap());
