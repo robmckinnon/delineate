@@ -26,6 +26,14 @@ To install, see INSTALL.txt
 Change Log
 ----------
 
+0.4 to 0.4.1
+
+- No longer use style attribute in output SVG, now use separate fill and stroke
+  attributes.
+- Reload image after doing group by color optimization. Sometimes this
+  optimization results in the color layers being in the wrong sequence on the
+  image, obscuring some image details.
+
 0.3.1 to 0.4
 
 - Now offer a choice of three SVG path grouping options:
