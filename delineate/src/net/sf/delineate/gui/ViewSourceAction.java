@@ -134,8 +134,7 @@ public class ViewSourceAction extends AbstractAction {
         textArea.setDocument(document);
 
         frame.setTitle(url.toString());
-        System.out.println(x + " " + y);
-        frame.setBounds(x, y, 600, 200);
+        frame.setBounds(x, y, 700, 650);
         frame.setVisible(true);
     }
 }

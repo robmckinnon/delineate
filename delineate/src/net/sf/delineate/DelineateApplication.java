@@ -83,7 +83,7 @@ public class DelineateApplication {
         frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 30, 800, 732);
+        frame.setBounds(130, 30, 800, 750);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }

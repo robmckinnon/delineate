@@ -192,7 +192,8 @@ public class SvgViewerPanel {
                 ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
                 viewSourceAction.setSourceUrl(uri);
                 Container ancestor = svgCanvas.getTopLevelAncestor();
-                viewSourceAction.setLocation(ancestor.getX(), ancestor.getY());
+                int top = ancestor.getInsets().top;
+                viewSourceAction.setLocation(ancestor.getX() + (top / 2), ancestor.getY() + top);
 
                 String fileSize = FileUtilities.getFileSize(file);
                 setStatus(resultText + file.getName());
