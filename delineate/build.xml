@@ -82,6 +82,7 @@
 
     <tar tarfile="${dist}/${package-name}.tar" basedir="${temp}"/>
     <gzip zipfile="${dist}/${package-name}.tar.gz" src="${dist}/${package-name}.tar"/>
+    <delete file="${dist}/${package-name}.tar"/>
   </target>
 
 

@@ -68,7 +68,7 @@ public abstract class SvgOptimizer {
 
     public abstract void optimize(File file, SVGDocument svgDocument);
 
-    protected void writeWidthAndHeight(PrintWriter w, String width, String height) {
+    private void writeWidthAndHeight(PrintWriter w, String width, String height) {
         w.print("width=\"");
         w.print(width);
         w.print("\" height=\"");
@@ -76,25 +76,24 @@ public abstract class SvgOptimizer {
         w.print("\"");
     }
 
-    private void writeViewBox(PrintWriter w, String viewBox) {
-        if(viewBox.length() > 0) {
-            w.print(" viewBox=\"");
-            w.print(viewBox);
-            w.print("\"");
-        }
+    private void writeViewBox(PrintWriter w, String width, String height) {
+        w.print("viewBox=\"0 0 ");
+        w.print(width);
+        w.print(" ");
+        w.print(height);
+        w.print("\"");
     }
 
     protected void writeDocumentStart(PrintWriter w, SVGSVGElement rootElement) {
         String width = rootElement.getWidth().getBaseVal().getValueAsString();
         String height = rootElement.getHeight().getBaseVal().getValueAsString();
-        String viewBox = rootElement.getAttribute("viewBox");
 
         w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
         w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
 
         w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" ");
-        writeWidthAndHeight(w, width, height);
-        writeViewBox(w, viewBox);
+//        writeWidthAndHeight(w, width, height);
+        writeViewBox(w, width, height);
         w.println(">");
 
         if(background != null) {

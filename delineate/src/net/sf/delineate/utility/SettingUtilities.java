@@ -29,8 +29,10 @@ import java.util.Properties;
  */
 public class SettingUtilities {
 
+    private static final String SETTINGS_DIR = "./settings/";
+
     public static void saveProperties(Properties properties, String fileName, String header) {
-        File file = new File(fileName);
+        File file = new File(SETTINGS_DIR + fileName);
         try {
             BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
             properties.store(outputStream, header);
@@ -40,7 +42,7 @@ public class SettingUtilities {
     }
 
     public static Properties loadProperties(String fileName, JPanel panel) {
-        File file = new File(fileName);
+        File file = new File(SETTINGS_DIR + fileName);
 
         if(!file.exists()) {
             try {

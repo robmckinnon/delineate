@@ -19,18 +19,6 @@
  */
 package net.sf.delineate.utility;
 
-import net.sourceforge.jiu.codecs.CodecMode;
-import net.sourceforge.jiu.codecs.PNMCodec;
-import net.sourceforge.jiu.color.promotion.PromotionRGB24;
-import net.sourceforge.jiu.color.reduction.RGBToGrayConversion;
-import net.sourceforge.jiu.color.reduction.ReduceToBilevelThreshold;
-import net.sourceforge.jiu.data.GrayIntegerImage;
-import net.sourceforge.jiu.data.PixelImage;
-import net.sourceforge.jiu.data.RGB24Image;
-import net.sourceforge.jiu.gui.awt.ToolkitLoader;
-import net.sourceforge.jiu.ops.OperationFailedException;
-
-import java.awt.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -55,13 +43,13 @@ public class FileUtilities {
         if(filePath.startsWith(".")) {
             String directory = System.getProperty("user.dir");
             filePath = directory + filePath.substring(1);
-            System.out.println("fille " + filePath);
+            System.out.println("file " + filePath);
         }
         return "file:" + filePath;
     }
 
     public static File getFile(String uri) {
-        String pathname = uri.substring(uri.indexOf(':')  + 1);
+        String pathname = uri.substring(uri.indexOf(':') + 1);
         File file = new File(pathname);
         return file;
     }
@@ -112,114 +100,24 @@ public class FileUtilities {
         out.close();
     }
 
-    public static boolean inBmpFormat(String ext) {
-        return ext.equalsIgnoreCase("bmp");
-    }
-
-    public static boolean inPnmFormat(String ext) {
-        return ext.equalsIgnoreCase("pnm") // any file
-                || ext.equalsIgnoreCase("pbm") // black and white
-                || ext.equalsIgnoreCase("pgm") // grey scale
-                || ext.equalsIgnoreCase("ppm"); // other palette
-    }
-
-    public static boolean inPbmFormat(String ext) {
-        return ext.equalsIgnoreCase("pbm");
-    }
-
+    /**
+     * Returns text after final '.' in file name if there is any,
+     * else returns empty string.
+     */
     public static String getExtension(File file) {
-        String ext = "";
         String name = file.getName();
         int index = name.lastIndexOf('.');
-        if(index != -1 && name.length() >= index) {
-            ext = name.substring(index + 1);
+        boolean extensionExists = (index != -1 && name.length() >= index);
+
+        return extensionExists ? name.substring(index + 1) : "";
+    }
+
+    public static File getTempDir() {
+        File file = new File("./img");
+        if(!file.exists()) {
+            file.mkdir();
         }
-        return ext;
-    }
-
-    public static File convertToPnm(File file) throws IOException, OperationFailedException {
-        PixelImage pixelImage = ToolkitLoader.loadViaToolkitOrCodecs(file.getPath(), true, null);
-        PNMCodec codec = new PNMCodec();
-        String extension = codec.suggestFileExtension(pixelImage);
-        File outputFile = new File(file.getParent(), file.getName() + extension);
-        codec.setImage(pixelImage);
-        codec.setFile(outputFile, CodecMode.SAVE);
-        codec.process();
-        codec.close();
-
-        return outputFile;
-    }
-
-    public static Dimension getDimension(File file) throws IOException, OperationFailedException {
-        PNMCodec codec = new PNMCodec();
-        codec.setFile(file, CodecMode.LOAD);
-        codec.process();
-        PixelImage image = codec.getImage();
-        return new Dimension(image.getWidth(), image.getHeight());
-    }
-
-    public static File convertToPbm(File inputFile, int thresholdPercent) throws IOException, OperationFailedException  {
-        String extension = getExtension(inputFile);
-        if(inPbmFormat(extension)) {
-            return inputFile;
-        }
-
-        File file = inPnmFormat(extension) ? inputFile : convertToPnm(inputFile);
-
-        PNMCodec codec = new PNMCodec();
-        codec.setFile(file, CodecMode.LOAD);
-        codec.process();
-        PixelImage image = codec.getImage();
-
-        if(!(image instanceof RGB24Image)) {
-            PromotionRGB24 promoter = new PromotionRGB24();
-            promoter.setInputImage(image);
-            promoter.process();
-        }
-
-        oldCode();
-        image = convertGreyToBilevel(convertRgbToGrey((RGB24Image)image), thresholdPercent);
-
-        codec = new PNMCodec();
-        codec.setImage(image);
-        String name = file.getName();
-        name = name.substring(0, name.lastIndexOf('.')) + ".pbm";
-        File outputFile = new File(file.getParent(), name);
-        codec.setFile(outputFile, CodecMode.SAVE);
-        codec.process();
-        codec.close();
-
-        return outputFile;
-    }
-
-    private static void oldCode() {
-//        MedianCutQuantizer quantizer = new MedianCutQuantizer();
-//        quantizer.setInputImage(image);
-//        quantizer.setMethodToDetermineRepresentativeColors(MedianCutQuantizer.METHOD_REPR_COLOR_WEIGHTED_AVERAGE);
-//        quantizer.setPaletteSize(2);
-//        quantizer.process();
-//        image = quantizer.getOutputImage();
-//
-//        if(image instanceof RGB24Image || image instanceof Paletted8Image) {
-//            image = convertRgbToGrey(image);
-//        }
-    }
-
-    private static PixelImage convertGreyToBilevel(GrayIntegerImage image, int thresholdPercent) throws OperationFailedException  {
-        ReduceToBilevelThreshold reducer = new ReduceToBilevelThreshold();
-        reducer.setInputImage(image);
-        reducer.setThreshold(image.getMaxSample(0) * thresholdPercent / 100);
-        reducer.process();
-
-        return reducer.getOutputImage();
-    }
-
-    private static GrayIntegerImage convertRgbToGrey(RGB24Image image) throws OperationFailedException  {
-        RGBToGrayConversion rgbtogray = new RGBToGrayConversion();
-        rgbtogray.setInputImage(image);
-//        rgbtogray.setColorWeights(0.33f, 0.33f, 0.33f);
-        rgbtogray.process();
-        return (GrayIntegerImage)rgbtogray.getOutputImage();
+        return file;
     }
 
 }

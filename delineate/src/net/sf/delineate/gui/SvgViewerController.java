@@ -176,7 +176,7 @@ public class SvgViewerController {
             svgViewerB.closeViewSourceFrame();
 
             File file = FileUtilities.getFile(uri);
-            File previousFile = new File(file.getParent(), file.getName() + '~');
+            final File previousFile = new File(FileUtilities.getTempDir(), file.getName() + '~');
 
             if(previousFile.exists()) {
                 previousFile.delete();
@@ -197,7 +197,8 @@ public class SvgViewerController {
 
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                    svgViewerB.setSvgDocument(uri + '~', svgDocument);
+                    String uri = FileUtilities.getUri(previousFile.getPath());
+                    svgViewerB.setSvgDocument(uri, svgDocument);
                 }
             });
         }

@@ -5,10 +5,10 @@ D E L I N E A T E   -   R A S T E R    T 0    S V G    C O N V E R T E R
 What is it?
 -----------
 
-Delineate is a Java Swing GUI tool for converting bitmap raster images
-to SVG (Scalable Vector Graphics) using AutoTrace. It displays SVG
-results using the Apache Batik SVG toolkit. Input formats are TGA, PBM,
-PNM, PGM, PPM or BMP.
+Delineate is a tool for converting bitmap raster images to SVG (Scalable Vector
+Graphics) using AutoTrace or potrace. It displays SVG results using Apache
+Batik. Input formats are JPEG, PNG, GIF, BMP, TIFF, PNM, PBM, PGM, PPM, IFF,
+PCD, PSD, RAS.
 
 Delineate is distributed under the GNU General Public License, see
 LICENSE.txt
@@ -25,6 +25,14 @@ To install, see INSTALL.txt
 
 Change Log
 ----------
+
+0.4.2 to 0.5
+
+- Users can now choose to do the conversion to SVG with potrace or AutoTrace.
+  potrace produces superior black and white SVG results compared to AutoTrace.
+- Increased supported raster input formats through the use of Java Imaging
+  Utilities (JIU). Now supports the following input formats:
+  JPEG, PNG, GIF, BMP, TIFF, PNM, PBM, PGM, PPM, IFF, PCD, PSD, RAS.
 
 0.4.1 to 0.4.2
 
@@ -123,7 +131,7 @@ Change Log
   installed.
 
 
-From 0.1 to 0.2
+0.1 to 0.2
 
 - Key bindings and popup menu for zoom, scroll, reset and view source
   actions.
@@ -132,3 +140,4 @@ From 0.1 to 0.2
 - File sizes are displayed.
 - File browser dialog for input and output file selection.
 - Colour chooser dialog for background colour selection.
+

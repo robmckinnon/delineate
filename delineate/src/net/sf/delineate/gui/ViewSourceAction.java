@@ -23,14 +23,7 @@ import org.apache.batik.util.MimeTypeConstants;
 import org.apache.batik.util.ParsedURL;
 import org.apache.batik.xml.XMLUtilities;
 
-import javax.swing.AbstractAction;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JComponent;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.event.ActionEvent;
@@ -56,6 +49,8 @@ public class ViewSourceAction extends AbstractAction {
 
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.getViewport().add(textArea);
+        ImageIcon image = new ImageIcon("img/delineate-icon.png");
+        frame.setIconImage(image.getImage());
         frame.setContentPane(scrollPane);
 
         final String CLOSE_ACTION = "close";
