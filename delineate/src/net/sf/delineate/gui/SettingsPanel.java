@@ -23,6 +23,7 @@ import net.sf.delineate.command.Command;
 import net.sf.delineate.command.Parameter;
 import net.sf.delineate.utility.ColorUtilities;
 import net.sf.delineate.utility.XPathTool;
+import net.sf.delineate.utility.FileUtilities;
 import org.xml.sax.SAXException;
 
 import javax.swing.AbstractAction;
@@ -84,8 +85,11 @@ public class SettingsPanel {
     private Command command;
 
     private final Map textFieldMap = new HashMap(5);
+    private Map fileSizeLabelMap = new HashMap(5);
     private final Map checkBoxMap = new HashMap(23);
     private final Map spinnerSliderMap = new HashMap(23);
+    private Properties savedSettings;
+    private JComboBox loadSettingsCombo;
 
     private final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -105,11 +109,9 @@ public class SettingsPanel {
         public void keyReleased(KeyEvent e) {
             JTextField textField = ((JTextField)e.getSource());
             command.setParameterValue(textField.getName(), textField.getText(), false);
+            setFileSizeText(textField.getName(), textField.getText());
         }
     };
-    private static final String BACKGROUND_COLOR_PARAMETER = "background-color";
-    private Properties savedSettings;
-    private JComboBox loadSettingsCombo;
 
 
     public SettingsPanel(String parameterFile) throws Exception {
@@ -326,7 +328,8 @@ public class SettingsPanel {
                 String name = parameter.getName();
                 JTextField textField = (JTextField)textFieldMap.get(name);
                 if(textField != null) {
-                    textField.setText(parameter.getValue());
+                    String path = parameter.getValue();
+                    textField.setText(path);
                 }
 
                 SpinnerSlider spinnerSlider = (SpinnerSlider)spinnerSliderMap.get(name);
@@ -397,6 +400,10 @@ public class SettingsPanel {
 
     private JComponent initControlComponent(String value, String name) {
         if(value.length() > 0) {
+            boolean isFileParameter = name.endsWith("file");
+            if(isFileParameter) {
+                setFileSizeText(name, value);
+            }
             JTextField textField = new JTextField(value);
             textField.setName(name);
             textField.setColumns(15);
@@ -405,7 +412,7 @@ public class SettingsPanel {
 
             textFieldMap.put(name, textField);
 
-            if(name.equals(BACKGROUND_COLOR_PARAMETER)) {
+            if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
                 textField.setEnabled(false);
             }
 
@@ -445,7 +452,7 @@ public class SettingsPanel {
     private JPanel initLabelPanel(boolean optional, boolean enabled, final SpinnerSlider spinnerSlider, String desc, final String name) {
         String labelName = name.replace('-', ' ');
         boolean isFileParameter = name.endsWith("file");
-        boolean isBgColorParameter = name.equals(BACKGROUND_COLOR_PARAMETER);
+        boolean isBgColorParameter = name.equals(Command.BACKGROUND_COLOR_PARAMETER);
         final JPanel panel = new JPanel(new BorderLayout());
         Component labelComponent = null;
 
@@ -466,6 +473,10 @@ public class SettingsPanel {
         if(optional) {
             JCheckBox checkBox = initCheckbox(name, desc, enabled, spinnerSlider, button);
             panel.add(checkBox, BorderLayout.EAST);
+        } else if(isFileParameter) {
+            JLabel label = new JLabel();
+            fileSizeLabelMap.put(name, label);
+            panel.add(label, BorderLayout.EAST);
         }
 
         return panel;
@@ -485,13 +496,13 @@ public class SettingsPanel {
     }
 
     private void chooseColor(final JPanel panel) {
-        JTextField textField = getTextField(BACKGROUND_COLOR_PARAMETER);
-        String colorParameter = command.getParameterValue(BACKGROUND_COLOR_PARAMETER);
+        JTextField textField = getTextField(Command.BACKGROUND_COLOR_PARAMETER);
+        String colorParameter = command.getParameterValue(Command.BACKGROUND_COLOR_PARAMETER);
         Color initialColor = ColorUtilities.getColor(colorParameter);
         Color color = JColorChooser.showDialog(panel, "Choose background color", initialColor);
         if(color != null) {
             String hexColor = ColorUtilities.getHexColor(color);
-            command.setParameterValue(BACKGROUND_COLOR_PARAMETER, hexColor, false);
+            command.setParameterValue(Command.BACKGROUND_COLOR_PARAMETER, hexColor, false);
             textField.setText(hexColor);
             textField.setBackground(color);
         }
@@ -508,6 +519,8 @@ public class SettingsPanel {
                     File file = fileChooser.getSelectedFile();
                     JTextField textField = getTextField(name);
                     textField.setText(file.getPath());
+                    setFileSizeText(name, file.getPath());
+
                     command.setParameterValue(textField.getName(), textField.getText(), false);
                 }
             }
@@ -525,6 +538,21 @@ public class SettingsPanel {
         return button;
     }
 
+    public void updateFileSize() {
+        String file = command.getParameterValue(Command.OUTPUT_FILE_PARAMETER);
+        setFileSizeText(Command.OUTPUT_FILE_PARAMETER, file);
+    }
+
+    private void setFileSizeText(final String name, String filePath) {
+        JLabel label = (JLabel)fileSizeLabelMap.get(name);
+
+        if(label != null) {
+            File file = FileUtilities.getFile(filePath);
+            String fileSize = FileUtilities.getFileSize(file);
+            label.setText(fileSize);
+        }
+    }
+
     private JCheckBox initCheckbox(final String name, String desc, boolean enabled, final SpinnerSlider spinnerSlider, final JButton button) {
         final JCheckBox checkBox = new JCheckBox("", false);
         checkBoxMap.put(name, checkBox);
@@ -538,10 +566,10 @@ public class SettingsPanel {
                     spinnerSlider.setEnabled(checkBox.isSelected());
                 }
             });
-        } else {
+        } else if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
             checkBox.addChangeListener(new ChangeListener() {
                 public void stateChanged(ChangeEvent e) {
-                    JTextField textField = getTextField(BACKGROUND_COLOR_PARAMETER);
+                    JTextField textField = getTextField(Command.BACKGROUND_COLOR_PARAMETER);
                     textField.setEnabled(checkBox.isSelected());
                     button.setEnabled(checkBox.isSelected());
                 }

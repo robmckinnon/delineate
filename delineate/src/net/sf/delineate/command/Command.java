@@ -35,6 +35,7 @@ public class Command {
     int parameterCount = 0;
     public static final String INPUT_FILE_PARAMETER = "input-file";
     public static final String OUTPUT_FILE_PARAMETER = "output-file";
+    public static final String BACKGROUND_COLOR_PARAMETER = "background-color";
 
     public Command(int totalParameterCount, CommandChangeListener listener) {
         parameters = new Parameter[totalParameterCount];

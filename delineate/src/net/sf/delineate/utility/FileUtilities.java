@@ -38,7 +38,9 @@ public class FileUtilities {
 
         long bytes = file.length();
 
-        if(bytes < 1024) {
+        if(bytes == 0) {
+           size = "";
+        } else if(bytes < 1024) {
             size = bytes + "b";
         } else {
             float kb = bytes / 1024F;

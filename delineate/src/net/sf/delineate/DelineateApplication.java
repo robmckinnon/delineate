@@ -33,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
+import javax.swing.ImageIcon;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -65,6 +66,8 @@ public class DelineateApplication {
         panel.add(svgViewerController.getSvgViewerPanels());
 
         frame.setContentPane(panel);
+        ImageIcon image = new ImageIcon("icon.png");
+        frame.setIconImage(image.getImage());
         frame.setBounds(130, 30, 800, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -119,6 +122,7 @@ public class DelineateApplication {
                 process.waitFor();
                 String outputFile = settingsPanel.getOutputFile();
                 viewerController.load("file:" + outputFile);
+                settingsPanel.updateFileSize();
             } catch(Exception e) {
                 e.printStackTrace();
             }
