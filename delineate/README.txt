@@ -30,9 +30,12 @@ Change Log
 
 - Users can now choose to do the conversion to SVG with potrace or AutoTrace.
   potrace produces superior black and white SVG results compared to AutoTrace.
-- Increased supported raster input formats through the use of Java Imaging
+- Increased number of supported raster input formats by using Java Imaging
   Utilities (JIU). Now supports the following input formats:
   JPEG, PNG, GIF, BMP, TIFF, PNM, PBM, PGM, PPM, IFF, PCD, PSD, RAS.
+- User prompted to select the location of the autotrace or potrace application
+  file when running a conversion for the first time. (In earlier releases an
+  environment variable needed to be set).
 
 0.4.1 to 0.4.2
 

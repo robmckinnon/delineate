@@ -72,6 +72,7 @@ public class SettingsPanel implements RenderingListener {
 
     private final JPanel panel;
     private Command command;
+    private JFileChooser tracingAppFileChooser;
     private ColorEditor colorEditor;
 
     private final ChangeListener changeListener = new ChangeListener() {
@@ -95,6 +96,8 @@ public class SettingsPanel implements RenderingListener {
             setFileSizeText(textField.getName(), textField.getText());
         }
     };
+
+    private static final String SETTINGS_FILE_NAME = "settings.prop";
 
 
     public SettingsPanel(XPathTool xpathTool) throws Exception {
@@ -197,7 +200,7 @@ public class SettingsPanel implements RenderingListener {
             }
         });
 
-        addTracingApplicationPathControls(commandName, panel);
+        loadTracingApplicationPath(panel);
 
         for(int type = 0; type < 3; type++) {
             for(int i = 0; i < parameterCount; i++) {
@@ -224,44 +227,44 @@ public class SettingsPanel implements RenderingListener {
             }
         }
 
-        SpringUtilities.makeCompactGrid(panel, descriptionCount + 1, 2, 6, 6, 6, 6);
+        SpringUtilities.makeCompactGrid(panel, descriptionCount, 2, 6, 6, 6, 6);
         return panel;
     }
 
-    private void addTracingApplicationPathControls(final String commandName, final JPanel panel) {
-        final JTextField textField = new JTextField("Set path before use");
-        textField.setEditable(false);
-
-        final String fileName = "settings.prop";
-        Properties properties = SettingUtilities.loadProperties(fileName, panel);
-        String commandPath = properties.getProperty(commandName);
+    private void loadTracingApplicationPath(final JPanel parent) {
+        Properties properties = SettingUtilities.loadProperties(SETTINGS_FILE_NAME, parent);
+        String commandPath = properties.getProperty(command.getCommandName());
         if(commandPath != null) {
             command.setTracingApplication(commandPath);
-            textField.setText(commandPath);
+        }
+    }
+
+    public void showTracingApplicationSelectionDialog() {
+        if(tracingAppFileChooser == null) {
+            String dialogTitle = "Select location of " + command.getCommandName();
+            JFileChooser fileChooser = initFileChooser(dialogTitle);
+
+            this.tracingAppFileChooser = fileChooser;
         }
 
-        JButton button = new JButton(new AbstractAction() {
-            JFileChooser fileChooser = new JFileChooser();
+        int response = tracingAppFileChooser.showOpenDialog(panel);
 
-            public void actionPerformed(ActionEvent e) {
-                int response = fileChooser.showOpenDialog((JComponent)e.getSource());
+        if(response == JFileChooser.APPROVE_OPTION) {
+            File file = tracingAppFileChooser.getSelectedFile();
+            String commandPath = file.getPath();
+            command.setTracingApplication(commandPath);
+            Properties properties = SettingUtilities.loadProperties(SETTINGS_FILE_NAME, panel);
+            properties.setProperty(command.getCommandName(), commandPath);
+            SettingUtilities.saveProperties(properties, SETTINGS_FILE_NAME, "Delineate tracing application settings - http//delineate.sourceforge.net");
+        }
+    }
 
-                if(response == JFileChooser.APPROVE_OPTION) {
-                    File file = fileChooser.getSelectedFile();
-                    String commandPath = file.getPath();
-                    textField.setText(commandPath);
-                    command.setTracingApplication(commandPath);
-                    Properties properties = SettingUtilities.loadProperties(fileName, panel);
-                    properties.setProperty(commandName, commandPath);
-                    SettingUtilities.saveProperties(properties, fileName, "Delineate tracing application settings - http//delineate.sourceforge.net");
-                }
-            }
-        });
-        button.setText("Path to " + commandName);
-        JPanel panel2 = new JPanel(new BorderLayout());
-        panel2.add(button, BorderLayout.WEST);
-        panel.add(panel2);
-        panel.add(textField);
+    private JFileChooser initFileChooser(String dialogTitle) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setApproveButtonText("Select");
+        fileChooser.setApproveButtonToolTipText("Select file");
+        fileChooser.setDialogTitle(dialogTitle);
+        return fileChooser;
     }
 
     private void addParameter(JPanel panel, XPathTool xpath, String xpathPrefix, String name) throws TransformerException {
@@ -397,9 +400,11 @@ public class SettingsPanel implements RenderingListener {
         return button;
     }
 
-    private JButton initFileChooserButton(final String name, String labelName, String function) {
+    private JButton initFileChooserButton(final String name, final String labelName, String function) {
+        final String prompt = function.equals(Command.INPUT_FILE_PARAMETER) ? "Select " : "Name ";
+
         AbstractAction action = new AbstractAction() {
-            JFileChooser fileChooser = new JFileChooser();
+            JFileChooser fileChooser = initFileChooser(prompt + labelName);
 
             public void actionPerformed(ActionEvent e) {
                 int response = fileChooser.showOpenDialog((JComponent)e.getSource());

@@ -209,6 +209,7 @@ public class DelineateApplication {
 
     private boolean assertTracingApplicationInstalled(String commandName, String command) {
         boolean installed = true;
+
         try {
             String output = RuntimeUtility.getOutput(new String[] {command, "-version"});
             System.out.println("Found: " + output);
@@ -218,6 +219,7 @@ public class DelineateApplication {
                 "See INSTALL.txt file for details.", commandName + " not found");
             installed = false;
         }
+
         return installed;
     }
 
@@ -225,10 +227,10 @@ public class DelineateApplication {
         final File file = settingsPanel.getInputFile();
 
         if(file.exists()) {
-            boolean installed = assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0]);
-            if(!installed) {
-                return;
+            while(!assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0])) {
+                settingsPanel.showTracingApplicationSelectionDialog();
             }
+
             disableGui();
             svgViewerController.setSvgOptimizer(svgOptimizer);
             svgViewerController.setStatus("Converting...");

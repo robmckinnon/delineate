@@ -41,14 +41,14 @@ public class SettingUtilities {
         }
     }
 
-    public static Properties loadProperties(String fileName, JPanel panel) {
+    public static Properties loadProperties(String fileName, JComponent parent) {
         File file = new File(SETTINGS_DIR + fileName);
 
         if(!file.exists()) {
             try {
                 file.createNewFile();
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(panel, "Cannot create " + fileName + " file: " + e.getMessage(), "Error", JOptionPane.PLAIN_MESSAGE);
+                JOptionPane.showMessageDialog(parent, "Cannot create " + fileName + " file: " + e.getMessage(), "Error", JOptionPane.PLAIN_MESSAGE);
             }
         }
 
