@@ -27,11 +27,13 @@ package net.sf.delineate.command;
 public class Parameter implements Comparable {
     String name;
     boolean enabled;
+    String defaultValue;
     String value;
 
     public Parameter(String name, boolean enabled, String value) {
         this.name = name;
         this.enabled = enabled;
+        this.defaultValue = value;
         this.value = value;
     }
 
@@ -47,7 +49,7 @@ public class Parameter implements Comparable {
         return value;
     }
 
-    public String paramValue() {
+    public String parameterSetting() {
         if(enabled) {
             if(name.equals("input-file")) {
                 return value;

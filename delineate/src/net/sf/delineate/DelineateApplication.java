@@ -22,17 +22,17 @@ package net.sf.delineate;
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import javax.swing.ActionMap;
-import javax.swing.JComponent;
-import javax.swing.InputMap;
-import javax.swing.AbstractAction;
-import javax.swing.KeyStroke;
-import javax.swing.JOptionPane;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -54,12 +54,6 @@ public class DelineateApplication {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(button);
-        JButton saveButton = new JButton(settingsPanel.getSaveSettingsAction());
-        saveButton.setText("Save");
-        buttonPanel.add(saveButton);
-        JButton loadButton = new JButton(settingsPanel.getLoadSettingsAction());
-        loadButton.setText("Load");
-        buttonPanel.add(loadButton);
 
         JPanel controlPanel = createControlPanel(settingsPanel, buttonPanel);
 //        JMenuBar menuBar = createMenuBar(svgViewerController);
@@ -107,6 +101,7 @@ public class DelineateApplication {
 
         JButton button = new JButton(actionMap.get(CONVERT__IMAGE__ACTION));
         button.setText("Run");
+        button.setMnemonic(KeyEvent.VK_R);
         return button;
     }
 

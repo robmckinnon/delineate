@@ -34,6 +34,7 @@ public class Command {
     private Parameter[] parameters;
     int parameterCount = 0;
     private static final String INPUT_FILE_PARAMETER = "input-file";
+    private static final String OUTPUT_FILE_PARAMETER = "output-file";
 
     public Command(int totalParameterCount, CommandChangeListener listener) {
         parameters = new Parameter[totalParameterCount];
@@ -51,7 +52,6 @@ public class Command {
 
         if(parameterCount == parameters.length) {
             Arrays.sort(parameters);
-//            changeListener.enabledChanged(parameter);
         }
     }
 
@@ -79,7 +79,11 @@ public class Command {
 
     public String getCommand() {
         StringBuffer buffer = new StringBuffer();
-        for(int i = 0; i < parameters.length; buffer.append(parameters[i++].paramValue())) ;
+        for(int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            String parameterSetting = parameter.parameterSetting();
+            buffer.append(parameterSetting);
+        }
         String command = "autotrace " + buffer.toString();
         return command;
     }
@@ -98,7 +102,25 @@ public class Command {
         return getParameter(name).value;
     }
 
+    public void setCommandDefaultValues() {
+        for(int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            String name = parameter.getName();
+            if(!name.equals(INPUT_FILE_PARAMETER) && !name.equals(OUTPUT_FILE_PARAMETER)) {
+                setParameterValue(name, parameter.defaultValue, true);
+            }
+        }
+    }
+
     public void setCommand(String command) {
+        for(int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            String name = parameter.getName();
+            if(!name.equals(INPUT_FILE_PARAMETER)) {
+                setParameterEnabled(name, false, true);
+            }
+        }
+
         StringTokenizer tokenizer = new StringTokenizer(command, " ");
         tokenizer.nextToken();
         String name = tokenizer.nextToken();
@@ -109,15 +131,15 @@ public class Command {
 
                 String value = tokenizer.nextToken();
                 if(value.charAt(0) != '-') {
-                    setParameterValue(name, value, true);
+                    if(!name.equals(OUTPUT_FILE_PARAMETER)) {
+                        setParameterValue(name, value, true);
+                    }
                     name = tokenizer.nextToken();
                 } else {
                     name = value;
                 }
             }
         }
-
-        setParameterValue(INPUT_FILE_PARAMETER, name, true);
     }
 
     /**

@@ -43,6 +43,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
+import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,6 +54,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -61,6 +65,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Controls user defined settings.
@@ -69,11 +74,12 @@ import java.util.Map;
 public class SettingsPanel {
 
     private static final String SAVE_SETTINGS_ACTION = "SaveSettingsAction";
-    private static final String LOAD_SETTINGS_ACTION = "SaveSettingsAction";
+    private static final String LOAD_SETTINGS_ACTION = "LoadSettingsAction";
+    private static final String DELETE_SETTINGS_ACTION = "DeleteSettingsAction";
+    private static final String DEFAULT_SETTING_NAME = "default";
 
     private JPanel panel;
     private Command command;
-//    private JTextArea commandTextArea;
 
     private final Map textFieldMap = new HashMap(5);
     private final Map checkBoxMap = new HashMap(23);
@@ -100,20 +106,23 @@ public class SettingsPanel {
         }
     };
     private static final String BACKGROUND_COLOR_PARAMETER = "background-color";
+    private Properties savedSettings;
+    private JComboBox loadSettingsCombo;
 
 
     public SettingsPanel(String parameterFile) throws Exception {
-//        commandTextArea = initCommandTextArea();
-
-//        JPanel commandPanel = new JPanel();
-//        commandPanel.add(commandTextArea);
-
-        panel = new JPanel();
+        panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Settings"));
-        panel.add(initContentPane(parameterFile));
-//        panel.add(commandPanel);
+        panel.add(initContentPane(parameterFile), BorderLayout.NORTH);
 
-//        SpringUtilities.makeCompactGrid(panel, 1, 1, 2, 2, 2, 2);
+        JPanel buttonPanel = new JPanel();
+        JButton deleteButton = initDeleteButton();
+
+        buttonPanel.add(initSaveButton());
+        buttonPanel.add(initLoadButton());
+        buttonPanel.add(initLoadSettingsCombo());
+        buttonPanel.add(deleteButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     public JPanel getPanel() {
@@ -121,7 +130,7 @@ public class SettingsPanel {
     }
 
     public String getCommand() {
-        return command.getCommand();// commandTextArea.getText();
+        return command.getCommand();
     }
 
     public boolean inputFileExists() {
@@ -135,25 +144,96 @@ public class SettingsPanel {
         return command.getParameterValue("output-file");
     }
 
-    public Action getSaveSettingsAction() {
-        AbstractAction action = new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
-                Properties properties = new Properties();
-                properties.setProperty("setting", getCommand());
-                String settingsFile = "settings.prop";
-                File file = new File(settingsFile);
-                try {
-                    BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-                    properties.store(outputStream, settingsFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
+    private void saveSettings() {
+        String initialName = (String)loadSettingsCombo.getSelectedItem();
+
+        if(initialName.equals(DEFAULT_SETTING_NAME)) {
+            initialName = "";
+        }
+        String name = (String)JOptionPane.showInputDialog(this.panel, "Enter a name:", "Save settings", JOptionPane.PLAIN_MESSAGE, null, null, initialName);
+
+        if(name != null) {
+            if(name.length() == 0) {
+                JOptionPane.showMessageDialog(this.panel, "You must enter a name to save settings.", "Invalid name.", JOptionPane.PLAIN_MESSAGE);
+                saveSettings();
+            } else if(name.equals(DEFAULT_SETTING_NAME)) {
+                JOptionPane.showMessageDialog(this.panel, "The name " + DEFAULT_SETTING_NAME + " is reserved.", "Invalid name.", JOptionPane.PLAIN_MESSAGE);
+                saveSettings();
+            } else {
+                savedSettings.setProperty(name, command.getCommand());
+                saveProperties(savedSettings);
+
+                if(!name.equals(initialName)) {
+                    loadSettingsCombo.addItem(name);
+                    loadSettingsCombo.setSelectedItem(name);
                 }
             }
+        }
+
+    }
+
+    private void deleteSettings() {
+        String settingName = (String)loadSettingsCombo.getSelectedItem();
+        int response = JOptionPane.showConfirmDialog(loadSettingsCombo, "Delete " + settingName + "?", "Confirm delete", JOptionPane.YES_NO_OPTION);
+
+        if(response == JOptionPane.YES_OPTION) {
+            savedSettings.remove(settingName);
+            saveProperties(savedSettings);
+            loadSettingsCombo.removeItem(settingName);
+            loadSettingsCombo.setSelectedItem(DELETE_SETTINGS_ACTION);
+        }
+    }
+
+    private JButton initDeleteButton() {
+        AbstractAction action = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                deleteSettings();
+            }
         };
+        action.setEnabled(false);
 
-        setKeyBinding(SAVE_SETTINGS_ACTION, KeyEvent.VK_S, KeyEvent.CTRL_MASK, action);
+        return initButton("Delete settings", DELETE_SETTINGS_ACTION, KeyEvent.VK_D, action);
+    }
 
-        return action;
+    private JButton initLoadButton() {
+        JButton button = initButton("Load:", LOAD_SETTINGS_ACTION, KeyEvent.VK_L, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                loadSettingsCombo.requestFocus();
+            }
+        });
+        button.setFocusPainted(false);
+        button.setFocusable(false);
+        button.setBorderPainted(false);
+        button.setMargin(new Insets(0, 0, 0, 0));
+
+        return button;
+    }
+
+    private JButton initSaveButton() {
+        return initButton("Save settings", SAVE_SETTINGS_ACTION, KeyEvent.VK_S, new AbstractAction() {
+            public void actionPerformed(ActionEvent event) {
+                saveSettings();
+            }
+        });
+    }
+
+    private JButton initButton(String text, String actionKey, int shortcutKey, AbstractAction action) {
+        setKeyBinding(actionKey, shortcutKey, KeyEvent.CTRL_MASK, action);
+
+        JButton button = new JButton(action);
+        button.setText(text);
+        button.setMnemonic(shortcutKey);
+        return button;
+    }
+
+    private void saveProperties(Properties properties) {
+        File file = getSettingsFile();
+        try {
+            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
+            properties.store(outputStream, "Delineate command settings for AutoTrace invocation - http//delineate.sourceforge.net");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void selectInputTextField() {
@@ -171,37 +251,59 @@ public class SettingsPanel {
         actionMap.put(actionKey, action);
     }
 
-    public Action getLoadSettingsAction() {
-        AbstractAction action = new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
-                String settingsFile = "settings.prop";
-                File file = new File(settingsFile);
-                Properties properties = new Properties();
+    private JComboBox initLoadSettingsCombo() {
+        savedSettings = loadProperties();
+        savedSettings.setProperty(DEFAULT_SETTING_NAME, command.getCommand());
 
-                try {
-                    BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
-                    properties.load(inStream);
-                    String property = properties.getProperty("setting");
-                    command.setCommand(property);
-                } catch (IOException e) {
-                    e.printStackTrace();
+        Set keySet = savedSettings.keySet();
+        String[] settingNames = (String[])keySet.toArray(new String[keySet.size()]);
+
+        loadSettingsCombo = new JComboBox(settingNames);
+        loadSettingsCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                if(e.getStateChange() == ItemEvent.SELECTED) {
+                    loadSettings((String)loadSettingsCombo.getSelectedItem());
                 }
             }
-        };
+        });
 
-        setKeyBinding(LOAD_SETTINGS_ACTION, KeyEvent.VK_L, KeyEvent.CTRL_MASK, action);
-
-        return action;
+        loadSettingsCombo.setSelectedItem(DEFAULT_SETTING_NAME);
+        return loadSettingsCombo;
     }
 
-//    private JTextArea initCommandTextArea() {
-//        JTextArea textArea = new JTextArea(5, 30);
-//        textArea.setLineWrap(true);
-//        textArea.setWrapStyleWord(true);
-//        textArea.setEditable(false);
-//        textArea.setBorder(BorderFactory.createLineBorder(Color.gray));
-//        return textArea;
-//    }
+    private void loadSettings(String settingName) {
+        String commandSetting = savedSettings.getProperty(settingName);
+        Action deleteAction = panel.getActionMap().get(DELETE_SETTINGS_ACTION);
+
+        if(settingName.equals(DEFAULT_SETTING_NAME)) {
+            command.setCommandDefaultValues();
+            deleteAction.setEnabled(false);
+        } else {
+            deleteAction.setEnabled(true);
+        }
+
+        command.setCommand(commandSetting);
+    }
+
+    private Properties loadProperties() {
+        File file = getSettingsFile();
+        Properties properties = new Properties();
+
+        try {
+            BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
+            properties.load(inStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return properties;
+    }
+
+    private File getSettingsFile() {
+        String settingsFile = "settings.prop";
+        File file = new File(settingsFile);
+        return file;
+    }
 
     private JPanel initContentPane(String parameterFile) throws ParserConfigurationException, IOException, SAXException, TransformerException {
         final JPanel panel = new JPanel(new BorderLayout());
@@ -351,7 +453,7 @@ public class SettingsPanel {
             JButton button = null;
 
             if(name.equals(BACKGROUND_COLOR_PARAMETER)) {
-                button = new JButton("?");
+                button = new JButton("C");
                 button.setToolTipText("Choose color");
                 button.setEnabled(false);
                 button.addActionListener(new ActionListener() {
