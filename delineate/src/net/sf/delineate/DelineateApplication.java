@@ -66,7 +66,7 @@ public class DelineateApplication {
         panel.add(svgViewerController.getSvgViewerPanels());
 
         frame.setContentPane(panel);
-        ImageIcon image = new ImageIcon("img/icon.png");
+        ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
         frame.setBounds(130, 30, 800, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
