@@ -164,11 +164,15 @@ public class SettingsPanel {
                 JOptionPane.showMessageDialog(this.panel, "The name " + DEFAULT_SETTING_NAME + " is reserved.", "Invalid name.", JOptionPane.PLAIN_MESSAGE);
                 saveSettings();
             } else {
+                boolean isNewSavedSetting = savedSettings.getProperty(name) == null;
                 savedSettings.setProperty(name, command.getCommand());
                 saveProperties(savedSettings);
 
-                if(!name.equals(initialName)) {
+                if(isNewSavedSetting) {
                     loadSettingsCombo.addItem(name);
+                }
+                
+                if(!name.equals(initialName)) {
                     loadSettingsCombo.setSelectedItem(name);
                 }
             }
