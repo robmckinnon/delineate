@@ -5,7 +5,7 @@
 <!-- ======================================================================= -->
 <project name="Delineate" default="run" basedir=".">
   <property name="name" value="delineate"/>
-  <property name="version" value="0.2"/>
+  <property name="version" value="0.3"/>
   <property name="package-name" value="${name}-${version}"/>
   <property name="main-class" value="net.sf.delineate.DelineateApplication"/>
 

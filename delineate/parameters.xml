@@ -23,7 +23,7 @@
     <default>256</default>
     <range>
       <use-whole-numbers>true</use-whole-numbers>
-      <min>1</min>
+      <min>2</min>
       <max>256</max>
       <step>1</step>
     </range>
