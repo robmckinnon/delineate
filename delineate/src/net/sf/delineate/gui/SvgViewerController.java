@@ -32,7 +32,9 @@ import javax.swing.JScrollBar;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
+import javax.swing.ActionMap;
 import java.awt.Adjustable;
+import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
@@ -75,9 +77,10 @@ public class SvgViewerController {
     }
 
     private void installActions() {
-//        int mask = KeyEvent.CTRL_MASK;
         int mask = 0;
-        addAction("Zoom in", JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_EQUALS, mask, false);
+        addAction("Zoom in", JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_ADD, mask, false);
+        addAction("Zoom out", JSVGCanvas.ZOOM_OUT_ACTION, KeyEvent.VK_SUBTRACT, mask, false);
+        addAction("Zoom in", JSVGCanvas.ZOOM_IN_ACTION, KeyEvent.VK_EQUALS, mask, true);
         addAction("Zoom out", JSVGCanvas.ZOOM_OUT_ACTION, KeyEvent.VK_MINUS, mask, true);
         addSeparator();
 
@@ -86,17 +89,17 @@ public class SvgViewerController {
         addAction(null, JSVGCanvas.SCROLL_UP_ACTION, KeyEvent.VK_UP, 0, false);
         addAction(null, JSVGCanvas.SCROLL_DOWN_ACTION, KeyEvent.VK_DOWN, 0, false);
 
-        addAction("Scroll right", JSVGCanvas.FAST_SCROLL_RIGHT_ACTION, KeyEvent.VK_RIGHT, KeyEvent.SHIFT_MASK, true);
-        addAction("Scroll left", JSVGCanvas.FAST_SCROLL_LEFT_ACTION, KeyEvent.VK_LEFT, KeyEvent.SHIFT_MASK, true);
-        addAction("Scroll up", JSVGCanvas.FAST_SCROLL_UP_ACTION, KeyEvent.VK_UP, KeyEvent.SHIFT_MASK, true);
-        addAction("Scroll down", JSVGCanvas.FAST_SCROLL_DOWN_ACTION, KeyEvent.VK_DOWN, KeyEvent.SHIFT_MASK, true);
+        addAction("Scroll right", JSVGCanvas.FAST_SCROLL_RIGHT_ACTION, KeyEvent.VK_RIGHT, Event.SHIFT_MASK, true);
+        addAction("Scroll left", JSVGCanvas.FAST_SCROLL_LEFT_ACTION, KeyEvent.VK_LEFT, Event.SHIFT_MASK, true);
+        addAction("Scroll up", JSVGCanvas.FAST_SCROLL_UP_ACTION, KeyEvent.VK_UP, Event.SHIFT_MASK, true);
+        addAction("Scroll down", JSVGCanvas.FAST_SCROLL_DOWN_ACTION, KeyEvent.VK_DOWN, Event.SHIFT_MASK, true);
         addSeparator();
 
         addAction("Reset", JSVGCanvas.RESET_TRANSFORM_ACTION, KeyEvent.VK_R, mask, true);
         addSeparator();
 
         addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, mask, svgViewerA);
-        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, mask + KeyEvent.SHIFT_MASK, svgViewerB);
+        addSpecificAction("View source", SvgViewerPanel.VIEW_SOURCE_ACTION, KeyEvent.VK_U, mask + Event.SHIFT_MASK, svgViewerB);
 
         svgViewerA.setControllerActionMap(panel.getActionMap());
         svgViewerB.setControllerActionMap(panel.getActionMap());
@@ -109,16 +112,20 @@ public class SvgViewerController {
 
     private void addAction(String name, String actionKey, int key, int modifiers, boolean addToMenu) {
         KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
-        panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, actionKey + key);
+        String actionMapKey = actionKey + key;
+        panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, actionMapKey);
+        ActionMap actionMap = panel.getActionMap();
 
-        Action actionA = svgViewerA.getAction(actionKey);
-        Action actionB = svgViewerB.getAction(actionKey);
-        SvgViewAction action = new SvgViewAction(name, actionA, actionB);
-        panel.getActionMap().put(actionKey + key, action);
+        if(actionMap.get(actionMapKey) == null) {
+            Action actionA = svgViewerA.getAction(actionKey);
+            Action actionB = svgViewerB.getAction(actionKey);
+            SvgViewAction action = new SvgViewAction(name, actionA, actionB);
+            actionMap.put(actionKey + key, action);
 
-        if(addToMenu) {
-            svgViewerA.addMenuItem(action, keyStroke);
-            svgViewerB.addMenuItem(action, keyStroke);
+            if(addToMenu) {
+                svgViewerA.addMenuItem(action, keyStroke);
+                svgViewerB.addMenuItem(action, keyStroke);
+            }
         }
     }
 

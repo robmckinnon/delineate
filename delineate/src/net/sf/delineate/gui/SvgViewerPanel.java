@@ -40,6 +40,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -123,8 +124,9 @@ public class SvgViewerPanel {
                 setStatus(resultText + file.getName());
                 sizeLabel.setText(fileSize);
                 ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
-                viewSourceAction.setSvgDocument(svgCanvas.getSVGDocument());
-                viewSourceAction.setLocation(svgCanvas.getX(), svgCanvas.getY());
+                viewSourceAction.setSourceUrl(svgCanvas.getSVGDocument().getURL());
+                Container ancestor = svgCanvas.getTopLevelAncestor();
+                viewSourceAction.setLocation(ancestor.getX(), ancestor.getY());
             }
         });
 
@@ -230,7 +232,7 @@ public class SvgViewerPanel {
                 } else {
                     setActionsEnabled(true);
                     ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
-                    viewSourceAction.setSvgDocument(svgDocument);
+                    viewSourceAction.setSourceUrl(svgDocument.getURL());
                     viewSourceAction.setLocation(e.getX(), e.getY());
                 }
 

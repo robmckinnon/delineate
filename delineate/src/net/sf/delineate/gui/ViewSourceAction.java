@@ -22,16 +22,21 @@ package net.sf.delineate.gui;
 import org.apache.batik.util.MimeTypeConstants;
 import org.apache.batik.util.ParsedURL;
 import org.apache.batik.xml.XMLUtilities;
-import org.w3c.dom.svg.SVGDocument;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JComponent;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.KeyStroke;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.EventQueue;
+import java.awt.Event;
 import java.io.InputStream;
 import java.io.Reader;
 
@@ -40,20 +45,37 @@ import java.io.Reader;
  */
 public class ViewSourceAction extends AbstractAction {
 
-    private SVGDocument svgDocument;
+    private String url;
     private int x;
     private int y;
     private final JFrame frame = new JFrame();
     private final JTextArea textArea = new JTextArea();
 
     public ViewSourceAction() {
+        textArea.setEditable(false);
+
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.getViewport().add(textArea);
         frame.setContentPane(scrollPane);
+
+        final String CLOSE_ACTION = "close";
+        ActionMap actionMap = scrollPane.getActionMap();
+
+        actionMap.put(CLOSE_ACTION, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                closeFrame();
+            }
+        });
+
+        InputMap inputMap = scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), CLOSE_ACTION);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Event.CTRL_MASK), CLOSE_ACTION);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, Event.CTRL_MASK), CLOSE_ACTION);
     }
 
-    public void setSvgDocument(SVGDocument svgDocument) {
-        this.svgDocument = svgDocument;
+    public void setSourceUrl(String url) {
+        this.url = url;
     }
 
     public void setLocation(int x, int y) {
@@ -70,15 +92,18 @@ public class ViewSourceAction extends AbstractAction {
     }
 
     public void actionPerformed(ActionEvent e) {
-        System.out.println("View source action performed");
-        final ParsedURL url = new ParsedURL(svgDocument.getURL());
+        if(url == null) {
+            return;
+        }
+
+        final ParsedURL parsedUrl = new ParsedURL(url);
 
         new Thread() {
             public void run() {
                 char[] buffer = new char[4096];
 
                 try {
-                    InputStream inputStream = url.openStream(MimeTypeConstants.MIME_TYPES_SVG);
+                    InputStream inputStream = parsedUrl.openStream(MimeTypeConstants.MIME_TYPES_SVG);
                     Reader reader = XMLUtilities.createXMLDocumentReader(inputStream);
                     int length;
 
@@ -94,12 +119,7 @@ public class ViewSourceAction extends AbstractAction {
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
                             synchronized(frame) {
-                                textArea.setDocument(document);
-                                textArea.setEditable(false);
-
-                                frame.setTitle(url.toString());
-                                frame.setBounds(x, y, 600, 200);
-                                frame.setVisible(true);
+                                setDocument(document);
                             }
                         }
                     });
@@ -108,5 +128,14 @@ public class ViewSourceAction extends AbstractAction {
                 }
             }
         }.start();
+    }
+
+    private void setDocument(final Document document) {
+        textArea.setDocument(document);
+
+        frame.setTitle(url.toString());
+        System.out.println(x + " " + y);
+        frame.setBounds(x, y, 600, 200);
+        frame.setVisible(true);
     }
 }
