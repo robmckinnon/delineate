@@ -20,9 +20,8 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.DelineateApplication;
-import net.sf.delineate.utility.ColorUtilities;
 import net.sf.delineate.utility.FileUtilities;
-import org.apache.batik.dom.svg.SVGDOMImplementation;
+import net.sf.delineate.utility.SvgOptimizer;
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
@@ -30,12 +29,7 @@ import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
 import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGDocument;
-import org.w3c.dom.svg.SVGPathElement;
-import org.w3c.dom.svg.SVGSVGElement;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -48,24 +42,12 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Panel for viewing SVG files.
@@ -86,14 +68,10 @@ public class SvgViewerPanel {
     private ActionMap controllerActionMap;
     private final ViewSourceAction viewSourceAction = new ViewSourceAction();
     private String uri;
-    private boolean extractStyles = false;
     private int pathCount = 0;
     private DelineateApplication.ConversionListener listener;
     private boolean optimize = false;
-    private String background;
-    private boolean centerlineEnabled;
-    private Map colorToStyleMap = new HashMap();
-    private Set colorSet = new HashSet();
+    private SvgOptimizer optimizer = new SvgOptimizer();
 
     public SvgViewerPanel(String resultText, int modifier) {
         this.modifier = modifier;
@@ -144,18 +122,7 @@ public class SvgViewerPanel {
                 }
 
                 public void documentLoadingCompleted(SVGDocumentLoaderEvent e) {
-                    if(background != null) {
-                        SVGDocument document = e.getSVGDocument();
-                        SVGSVGElement root = document.getRootElement();
-
-                        Element rectangle = document.createElementNS(SVGDOMImplementation.SVG_NAMESPACE_URI, "rect");
-                        rectangle.setAttributeNS(null, "width", root.getWidth().getBaseVal().getValueAsString());
-                        rectangle.setAttributeNS(null, "height", root.getHeight().getBaseVal().getValueAsString());
-                        rectangle.setAttributeNS(null, "fill", '#' + background);
-
-                        Node firstChild = root.getFirstChild();
-                        root.insertBefore(rectangle, firstChild);
-                    }
+                    optimizer.setBackground(e.getSVGDocument());
                 }
             });
 
@@ -178,7 +145,8 @@ public class SvgViewerPanel {
                     setStatus("Optimizing...");
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            optimize(file);
+                            optimizer.optimize(file, getSvgDocument());
+                            listener.setColors(optimizer.getColors());
                             optimize = false;
                             finishConversion(file, resultText);
                         }
@@ -205,183 +173,6 @@ public class SvgViewerPanel {
             }
         });
 
-    }
-
-
-    private void optimize(File file) {
-        try {
-            long start = System.currentTimeMillis();
-
-            PrintWriter w = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath())));
-
-            Map styleToColorMap = new HashMap();
-            List styleList = new LinkedList();
-
-            if(extractStyles) {
-                styleToColorMap = new HashMap();
-                styleList = new LinkedList();
-            }
-
-            SVGSVGElement rootElement = getSvgDocument().getRootElement();
-            writeDocumentStart(w, rootElement);
-            if(centerlineEnabled) {
-                w.println("<g fill=\"none\">");
-            } else {
-                w.println("<g stroke=\"none\">");
-            }
-            pathCount = writePaths(rootElement, styleList, styleToColorMap, w);
-            w.println("</g>");
-            if(extractStyles) {
-                writeStyles(w, styleList, styleToColorMap);
-            }
-
-            w.println("</svg>");
-            w.flush();
-            w.close();
-
-            System.out.println("optimizing took " + (System.currentTimeMillis() - start));
-
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void writeStyles(PrintWriter w, List codeList, Map codeToFillMap) {
-        w.println("<defs>");
-        w.println("<style type=\"text/css\"><![CDATA[");
-
-        Iterator iterator = codeList.iterator();
-
-        while(iterator.hasNext()) {
-            String name = (String)iterator.next();
-            w.print(".");
-            w.print(name);
-            if(centerlineEnabled) {
-                w.print("{stroke:#");
-            } else {
-                w.print("{fill:#");
-            }
-            w.print(codeToFillMap.get(name).toString());
-            w.println("}");
-        }
-        w.println("]]></style>");
-        w.println("</defs>");
-    }
-
-    private int writePaths(SVGSVGElement rootElement, List styleList, Map styleToColorMap, PrintWriter w) {
-        NodeList childNodes = rootElement.getChildNodes();
-        int pathCount = 0;
-        int styleCount = 0;
-        String colorText = null;
-        colorSet.clear();
-
-        if(extractStyles) {
-            colorToStyleMap.clear();
-        }
-
-        for(int i = 0; i < childNodes.getLength(); i++) {
-            Node node = childNodes.item(i);
-
-            if(node instanceof SVGPathElement) {
-                pathCount++;
-                SVGPathElement path = (SVGPathElement)node;
-
-                if(centerlineEnabled) {
-                    colorText = path.getAttribute("style").substring(8, 14);
-                } else {
-                    colorText = path.getAttribute("style").substring(6, 12);
-                }
-
-                if(pathCount <= 279 && !colorSet.contains(colorText)) {
-                    Color color = ColorUtilities.getColor(colorText);
-                    colorSet.add(color);
-                }
-
-                if(extractStyles) {
-                    if(!colorToStyleMap.containsKey(colorText)) {
-                        String style = getStyleName(styleCount);
-                        styleList.add(style);
-                        colorToStyleMap.put(colorText, style);
-                        styleToColorMap.put(style, colorText);
-                        styleCount++;
-                    }
-
-                    w.print("<path class=\"");
-                    w.print((String)colorToStyleMap.get(colorText));
-                } else {
-                    if(centerlineEnabled) {
-                        w.print("<path stroke=\"#");
-                    } else {
-                        w.print("<path fill=\"#");
-                    }
-                    w.print(colorText);
-                }
-
-                w.print("\" d=\"");
-                String pathText = path.getAttribute("d");
-                int index = pathText.length() - 1;
-                char c = pathText.charAt(index);
-
-                if(c == 'z') {
-                    do {
-                        c = pathText.charAt(--index);
-                    } while(Character.isDigit(c) || Character.isWhitespace(c));
-
-                    if(c == 'L') {
-                        pathText = pathText.substring(0, index) + 'z';
-                    }
-                }
-                w.print(pathText);
-                w.println("\"/>");
-            }
-        }
-
-        Color[] colors = (Color[])colorSet.toArray(new Color[colorSet.size()]);
-        listener.setColors(colors);
-
-        return pathCount;
-    }
-
-    private void writeDocumentStart(PrintWriter w, SVGSVGElement rootElement) {
-        String width = rootElement.getWidth().getBaseVal().getValueAsString();
-        String height = rootElement.getHeight().getBaseVal().getValueAsString();
-
-        w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
-        w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
-
-        w.print("<svg ");
-        writeWidthAndHeight(w, width, height);
-        w.println(">");
-
-        if(background != null) {
-            w.print("<rect fill=\"#");
-            w.print(background);
-            w.print("\" ");
-            writeWidthAndHeight(w, width, height);
-            w.println("/>");
-        }
-    }
-
-    private void writeWidthAndHeight(PrintWriter w, String width, String height) {
-        w.print("width=\"");
-        w.print(width);
-        w.print("\" height=\"");
-        w.print(height);
-        w.print("\"");
-    }
-
-    private String getStyleName(int i) {
-        int first = i / 51;
-
-        if(first == 0) {
-            if(i < 26) {
-                return (new Character((char)(i + 97))).toString();
-            } else {
-                return (new Character((char)(i + 39))).toString();
-            }
-        } else {
-            return getStyleName(first - 1) + getStyleName(i % 51);
-        }
     }
 
     public void setStatus(String text) {
@@ -471,7 +262,7 @@ public class SvgViewerPanel {
     }
 
     public void setExtractStyles(boolean extractStyles) {
-        this.extractStyles = extractStyles;
+        optimizer.setExtractStyles(extractStyles);
     }
 
     public void addConversionListener(DelineateApplication.ConversionListener listener) {
@@ -483,11 +274,11 @@ public class SvgViewerPanel {
     }
 
     public void setBackgroundColor(String color) {
-        background = color;
+        optimizer.setBackgroundColor(color);
     }
 
     public void setCenterlineEnabled(boolean enabled) {
-        centerlineEnabled = enabled;
+        optimizer.setCenterlineEnabled(enabled);
     }
 
     private class PopupListener extends MouseAdapter {
