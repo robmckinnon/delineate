@@ -23,6 +23,7 @@ import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
+import net.sf.delineate.utility.SvgOptimizer;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -92,62 +93,41 @@ public class DelineateApplication {
     }
 
     private JPanel initOptionsPanel(final SvgViewerController viewerController) {
-        final String NO_GROUPS = "leave styles on paths";
-        final String SINGLE_GROUP = "group all paths in one group";
-        final String COLOR_GROUPS = "group paths by color";
-        final String STYLE_DEFS = "create style definitions";
-
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String command = e.getActionCommand();
-                if(command == NO_GROUPS) {
-                    viewerController.setExtractStyles(false);
-
-                } else if(command == SINGLE_GROUP) {
-                    viewerController.setExtractStyles(false);
-
-                } else if(command == COLOR_GROUPS) {
-                    viewerController.setExtractStyles(false);
-
-                } else if(command == STYLE_DEFS) {
-                    viewerController.setExtractStyles(true);
-                }
+                String optimizeType = e.getActionCommand();
+                viewerController.setOptimizeType(optimizeType);
             }
         };
-        JRadioButton noGroupsRadio = initRadio(NO_GROUPS,
-            "Style attribute is on each path element.", listener);
-        JRadioButton singleGroupRadio = initRadio(SINGLE_GROUP,
-            "Group all paths in one group element, which defines stroke style.", listener);
-        JRadioButton colorGroupsRadio = initRadio(COLOR_GROUPS,
-            "Create a separate group element for each path fill color.", listener);
-        JRadioButton styleDefsRadio = initRadio(STYLE_DEFS,
-            "Creates SVG style definitions, may reduce output file size if there are many paths and few colors. Use with the color count setting.", listener);
-
-        noGroupsRadio.setSelected(true);
 
         ButtonGroup buttonGroup = new ButtonGroup();
-        buttonGroup.add(noGroupsRadio);
-        buttonGroup.add(singleGroupRadio);
-        buttonGroup.add(colorGroupsRadio);
-        buttonGroup.add(styleDefsRadio);
-
         JPanel panel = new JPanel(new SpringLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Result options"));
 
-        panel.add(noGroupsRadio);
-        panel.add(singleGroupRadio);
-        panel.add(colorGroupsRadio);
-        panel.add(styleDefsRadio);
+        svgViewerController.setOptimizeType(SvgOptimizer.NO_GROUPS);
 
-        SpringUtilities.makeCompactGrid(panel, 2, 2, 2, 2, 2, 2);
+        initRadio(SvgOptimizer.NO_GROUPS, listener, buttonGroup, panel,
+                "Don't place paths in group elements. Each path element has a style attribute.").setSelected(true);
+        initRadio(SvgOptimizer.COLOR_GROUPS, listener, buttonGroup, panel,
+                "Place paths in group elements based on color. Use with color count setting to reduce file size.");
+        initRadio(SvgOptimizer.ONE_GROUP, listener, buttonGroup, panel,
+                "Place all paths in one group element that defines common style setting.");
+
+//        Don't show style definition option, because resulting file doesn't render properly in SodiPodi, nor Mozilla
+//        initRadio(SvgOptimizer.STYLE_DEFS, listener, buttonGroup, panel,
+//            "Creates SVG style definitions, may reduce output file size if there are many paths and few colors. Use with the color count setting.");
+
+        SpringUtilities.makeCompactGrid(panel, 1, 3, 2, 2, 2, 2);
         return panel;
     }
 
-    private JRadioButton initRadio(String text, String tooltip, ActionListener listener) {
+    private JRadioButton initRadio(String text, ActionListener listener, ButtonGroup buttonGroup, JPanel panel, String tooltip) {
         JRadioButton radio = new JRadioButton(text);
         radio.setToolTipText(tooltip);
         radio.setActionCommand(text);
         radio.addActionListener(listener);
+        buttonGroup.add(radio);
+        panel.add(radio);
         return radio;
     }
 

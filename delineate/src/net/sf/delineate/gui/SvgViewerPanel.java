@@ -147,6 +147,7 @@ public class SvgViewerPanel {
                         public void run() {
                             optimizer.optimize(file, getSvgDocument());
                             listener.setColors(optimizer.getColors());
+                            setPathCount(optimizer.getPathCount());
                             optimize = false;
                             finishConversion(file, resultText);
                         }
@@ -261,10 +262,6 @@ public class SvgViewerPanel {
         return svgCanvas.getSVGDocument();
     }
 
-    public void setExtractStyles(boolean extractStyles) {
-        optimizer.setExtractStyles(extractStyles);
-    }
-
     public void addConversionListener(DelineateApplication.ConversionListener listener) {
         this.listener = listener;
     }
@@ -279,6 +276,10 @@ public class SvgViewerPanel {
 
     public void setCenterlineEnabled(boolean enabled) {
         optimizer.setCenterlineEnabled(enabled);
+    }
+
+    public void setOptimizeType(String optimizeType) {
+        optimizer.setOptimizeType(optimizeType);
     }
 
     private class PopupListener extends MouseAdapter {

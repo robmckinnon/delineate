@@ -1,5 +1,5 @@
 /*
- * SvgViewerPanel.java
+ * SvgOptimizer.java
  *
  * Copyright (C) 2003 Robert McKinnon
  *
@@ -40,22 +40,33 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
- * Panel for viewing SVG files.
+ * SVG optimizer.
  * @author robmckinnon@users.sourceforge.net
  */
 public class SvgOptimizer {
 
-    public static final String VIEW_SOURCE_ACTION = "ViewSource";
+    public static final String NO_GROUPS = "no groups";
+    public static final String ONE_GROUP = "one group";
+    public static final String COLOR_GROUPS = "group by color";
+    public static final String STYLE_DEFS = "create style definitions";
 
-    private boolean extractStyles = false;
     private int pathCount = 0;
     private String background;
     private boolean centerlineEnabled;
     private Map colorToStyleMap = new HashMap();
+    private Map colorToPathsMap = new HashMap();
+    private List colorList = new ArrayList();
     private Set colorSet = new HashSet();
     private Color[] colors;
+
+    private String type;
+
+    public void setOptimizeType(String type) {
+        this.type = type;
+    }
 
     public int getPathCount() {
         return pathCount;
@@ -92,20 +103,28 @@ public class SvgOptimizer {
             Map styleToColorMap = new HashMap();
             List styleList = new LinkedList();
 
-            if(extractStyles) {
+            if(extractStyles()) {
                 styleToColorMap = new HashMap();
                 styleList = new LinkedList();
             }
 
             writeDocumentStart(w, rootElement);
-            if(centerlineEnabled) {
-                w.println("<g fill=\"none\">");
-            } else {
-                w.println("<g stroke=\"none\">");
+
+            if(oneGroup()) {
+                if(centerlineEnabled) {
+                    w.println("<g fill=\"none\">");
+                } else {
+                    w.println("<g stroke=\"none\">");
+                }
             }
+
             pathCount = writePaths(rootElement, styleList, styleToColorMap, w);
-            w.println("</g>");
-            if(extractStyles) {
+
+            if(oneGroup()) {
+                w.println("</g>");
+            }
+
+            if(extractStyles()) {
                 writeStyles(w, styleList, styleToColorMap);
             }
 
@@ -147,11 +166,7 @@ public class SvgOptimizer {
         int pathCount = 0;
         int styleCount = 0;
         String colorText = null;
-        colorSet.clear();
-
-        if(extractStyles) {
-            colorToStyleMap.clear();
-        }
+        clearColorCollections();
 
         for(int i = 0; i < childNodes.getLength(); i++) {
             Node node = childNodes.item(i);
@@ -159,11 +174,12 @@ public class SvgOptimizer {
             if(node instanceof SVGPathElement) {
                 pathCount++;
                 SVGPathElement path = (SVGPathElement)node;
+                String styleText = path.getAttribute("style");
 
                 if(centerlineEnabled) {
-                    colorText = path.getAttribute("style").substring(8, 14);
+                    colorText = styleText.substring(8, 14);
                 } else {
-                    colorText = path.getAttribute("style").substring(6, 12);
+                    colorText = styleText.substring(6, 12);
                 }
 
                 if(pathCount <= 279 && !colorSet.contains(colorText)) {
@@ -171,7 +187,22 @@ public class SvgOptimizer {
                     colorSet.add(color);
                 }
 
-                if(extractStyles) {
+                if(noGroups()) {
+                    w.print("<path style=\"");
+                    if(centerlineEnabled) {
+                        w.print("fill:none;stroke:#");
+                    } else {
+                        w.print("stroke:none;fill:#");
+                    }
+                    w.print(colorText);
+                } else if(oneGroup()) {
+                    if(centerlineEnabled) {
+                        w.print("<path stroke=\"#");
+                    } else {
+                        w.print("<path fill=\"#");
+                    }
+                    w.print(colorText);
+                } else if(extractStyles()) {
                     if(!colorToStyleMap.containsKey(colorText)) {
                         String style = getStyleName(styleCount);
                         styleList.add(style);
@@ -182,16 +213,12 @@ public class SvgOptimizer {
 
                     w.print("<path class=\"");
                     w.print((String)colorToStyleMap.get(colorText));
-                } else {
-                    if(centerlineEnabled) {
-                        w.print("<path stroke=\"#");
-                    } else {
-                        w.print("<path fill=\"#");
-                    }
-                    w.print(colorText);
                 }
 
-                w.print("\" d=\"");
+                if(!colorGroups()) {
+                    w.print("\" d=\"");
+                }
+
                 String pathText = path.getAttribute("d");
                 int index = pathText.length() - 1;
                 char c = pathText.charAt(index);
@@ -205,14 +232,67 @@ public class SvgOptimizer {
                         pathText = pathText.substring(0, index) + 'z';
                     }
                 }
-                w.print(pathText);
-                w.println("\"/>");
+
+                if(!colorGroups()) {
+                    w.print(pathText);
+                    w.println("\"/>");
+                } else {
+                    List list;
+                    if(colorToPathsMap.containsKey(colorText)) {
+                        list = (List)colorToPathsMap.get(colorText);
+                    } else {
+                        list = new ArrayList();
+                        colorList.add(colorText);
+                        colorToPathsMap.put(colorText, list);
+                    }
+
+                    list.add(pathText);
+                }
             }
         }
 
         colors = (Color[])colorSet.toArray(new Color[colorSet.size()]);
 
+        if(colorGroups()) {
+            for(Iterator iterator = colorList.iterator(); iterator.hasNext();) {
+                colorText = (String)iterator.next();
+                List pathList = (List)colorToPathsMap.get(colorText);
+                if(centerlineEnabled) {
+                    w.print("<g style=\"fill:none;stroke:#");
+                } else {
+                    w.print("<g style=\"stroke:none;fill:#");
+                }
+                w.print(colorText);
+                w.println("\">");
+                for(Iterator i = pathList.iterator(); i.hasNext();) {
+                    String pathText = (String)i.next();
+                    w.print("<path d=\"");
+                    w.print(pathText);
+                    w.println("\"/>");
+                    i.remove();
+                }
+                w.println("</g>");
+                iterator.remove();
+            }
+        }
+
         return pathCount;
+    }
+
+    private void clearColorCollections() {
+        colorSet.clear();
+
+        if(extractStyles()) {
+            colorToStyleMap.clear();
+        } else if(colorGroups()) {
+            colorList.clear();
+            colorToPathsMap.clear();
+//            Iterator iterator = colorToPathsMap.values().iterator();
+//            while (iterator.hasNext()) {
+//                List list = (List)iterator.next();
+//                list.clear();
+//            }
+        }
     }
 
     private void writeDocumentStart(PrintWriter w, SVGSVGElement rootElement) {
@@ -222,7 +302,7 @@ public class SvgOptimizer {
         w.println("<?xml version=\"1.0\" standalone=\"no\"?>");
         w.println("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
 
-        w.print("<svg ");
+        w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" ");
         writeWidthAndHeight(w, width, height);
         w.println(">");
 
@@ -257,16 +337,28 @@ public class SvgOptimizer {
         }
     }
 
-    public void setExtractStyles(boolean extractStyles) {
-        this.extractStyles = extractStyles;
-    }
-
     public void setBackgroundColor(String color) {
         background = color;
     }
 
     public void setCenterlineEnabled(boolean enabled) {
         centerlineEnabled = enabled;
+    }
+
+    private boolean noGroups() {
+        return type == NO_GROUPS;
+    }
+
+    private boolean oneGroup() {
+        return type == ONE_GROUP;
+    }
+
+    private boolean colorGroups() {
+        return type == COLOR_GROUPS;
+    }
+
+    private boolean extractStyles() {
+        return type == STYLE_DEFS;
     }
 
 }

@@ -229,16 +229,16 @@ public class SvgViewerController {
         return svgViewerA.getSvgDocument();
     }
 
-    public void setExtractStyles(boolean extractStyles) {
-        svgViewerA.setExtractStyles(extractStyles);
-    }
-
     public void setBackgroundColor(String color) {
         svgViewerA.setBackgroundColor(color);
     }
 
     public void setCenterlineEnabled(boolean centerlineEnabled) {
         svgViewerA.setCenterlineEnabled(centerlineEnabled);
+    }
+
+    public void setOptimizeType(String optimizeType) {
+        svgViewerA.setOptimizeType(optimizeType);
     }
 
     private class ScrollListener implements AdjustmentListener {

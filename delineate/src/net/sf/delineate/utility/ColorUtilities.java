@@ -22,6 +22,8 @@ package net.sf.delineate.utility;
 import java.awt.Color;
 import java.util.Comparator;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Colour utility methods.
@@ -30,6 +32,8 @@ import java.util.Arrays;
 public class ColorUtilities {
 
     private static final int THRESHOLD = 3 * Integer.parseInt("66", 16) + 1;
+
+    private static Map hexToColorMap = new HashMap(301);
 
     private static final Comparator comparator = new Comparator() {
         public int compare(Object o1, Object o2) {
@@ -41,15 +45,21 @@ public class ColorUtilities {
     };
 
     public static Color getColor(String hexColor) {
+        Color color;
+
         if(hexColor == null) {
-            return null;
+            color = null;
+        } else if(hexToColorMap.containsKey(hexColor)) {
+            color = (Color)hexToColorMap.get(hexColor);
+        } else {
+            int red = Integer.parseInt(hexColor.substring(0, 2), 16);
+            int green = Integer.parseInt(hexColor.substring(2, 4), 16);
+            int blue = Integer.parseInt(hexColor.substring(4), 16);
+            color = new Color(red, green, blue);
+            hexToColorMap.put(hexColor, color);
         }
 
-        int red = Integer.parseInt(hexColor.substring(0, 2), 16);
-        int green = Integer.parseInt(hexColor.substring(2, 4), 16);
-        int blue = Integer.parseInt(hexColor.substring(4), 16);
-
-        return new Color(red, green, blue);
+        return color;
     }
 
     public static Color getForeground(Color color) {
