@@ -21,30 +21,29 @@ package net.sf.delineate;
 
 import net.sf.delineate.gui.SettingsPanel;
 import net.sf.delineate.gui.SvgViewerController;
-import net.sf.delineate.utility.GuiUtilities;
 import net.sf.delineate.utility.FileUtilities;
+import net.sf.delineate.utility.GuiUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
 import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
@@ -93,25 +92,63 @@ public class DelineateApplication {
     }
 
     private JPanel initOptionsPanel(final SvgViewerController viewerController) {
-        JLabel label = new JLabel("create style definitions");
-        final JCheckBox checkBox = new JCheckBox();
+        final String NO_GROUPS = "leave styles on paths";
+        final String SINGLE_GROUP = "group all paths in one group";
+        final String COLOR_GROUPS = "group paths by color";
+        final String STYLE_DEFS = "create style definitions";
 
-        checkBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                boolean selected = checkBox.isSelected();
-                viewerController.setExtractStyles(selected);
+        ActionListener listener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String command = e.getActionCommand();
+                if(command == NO_GROUPS) {
+                    viewerController.setExtractStyles(false);
+
+                } else if(command == SINGLE_GROUP) {
+                    viewerController.setExtractStyles(false);
+
+                } else if(command == COLOR_GROUPS) {
+                    viewerController.setExtractStyles(false);
+
+                } else if(command == STYLE_DEFS) {
+                    viewerController.setExtractStyles(true);
+                }
             }
-        });
-        String tooltip = "Creates SVG style definitions, may reduce output file size if there are many paths and few colors. Use with the color count setting.";
-        label.setToolTipText(tooltip);
-        checkBox.setToolTipText(tooltip);
+        };
+        JRadioButton noGroupsRadio = initRadio(NO_GROUPS,
+            "Style attribute is on each path element.", listener);
+        JRadioButton singleGroupRadio = initRadio(SINGLE_GROUP,
+            "Group all paths in one group element, which defines stroke style.", listener);
+        JRadioButton colorGroupsRadio = initRadio(COLOR_GROUPS,
+            "Create a separate group element for each path fill color.", listener);
+        JRadioButton styleDefsRadio = initRadio(STYLE_DEFS,
+            "Creates SVG style definitions, may reduce output file size if there are many paths and few colors. Use with the color count setting.", listener);
+
+        noGroupsRadio.setSelected(true);
+
+        ButtonGroup buttonGroup = new ButtonGroup();
+        buttonGroup.add(noGroupsRadio);
+        buttonGroup.add(singleGroupRadio);
+        buttonGroup.add(colorGroupsRadio);
+        buttonGroup.add(styleDefsRadio);
+
         JPanel panel = new JPanel(new SpringLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Result options"));
-        panel.add(label);
-        panel.add(checkBox);
 
-        SpringUtilities.makeCompactGrid(panel, 1, 2, 2, 2, 2, 2);
+        panel.add(noGroupsRadio);
+        panel.add(singleGroupRadio);
+        panel.add(colorGroupsRadio);
+        panel.add(styleDefsRadio);
+
+        SpringUtilities.makeCompactGrid(panel, 2, 2, 2, 2, 2, 2);
         return panel;
+    }
+
+    private JRadioButton initRadio(String text, String tooltip, ActionListener listener) {
+        JRadioButton radio = new JRadioButton(text);
+        radio.setToolTipText(tooltip);
+        radio.setActionCommand(text);
+        radio.addActionListener(listener);
+        return radio;
     }
 
 //    private JMenuBar createMenuBar(final SvgViewerController svgViewerController) {
