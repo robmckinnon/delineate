@@ -6,8 +6,8 @@ What is it?
 -----------
 
 Delineate is a Java Swing GUI tool for converting bitmap raster images
-to SVG (Scalable Vector Graphics) using AutoTrace. It displays SVG 
-results using the Apache Batik SVG toolkit. Input formats are TGA, PBM, 
+to SVG (Scalable Vector Graphics) using AutoTrace. It displays SVG
+results using the Apache Batik SVG toolkit. Input formats are TGA, PBM,
 PNM, PGM, PPM or BMP.
 
 Delineate is distributed under the GNU General Public License, see
@@ -26,7 +26,15 @@ To install, see INSTALL.txt
 Change Log
 ----------
 
-From 0.2 to 0.3
+0.3 to 0.3.1
+
+- Fixed bugs related to filenames that have spaces in them.
+  - Now conversion runs properly when filenames have spaces in them.
+  - Loading of conversion settings doesn't cause 100% cpu infinite loop.
+- Fixed bug that occurred when new result was significantly smaller in
+  size than the previous result.
+
+0.2 to 0.3
 
 - Improved handling of background colour settings:
   - Background colour button now brings up a colour palette displaying
@@ -41,16 +49,16 @@ From 0.2 to 0.3
   - Use single 'g' element to set stroke=none for all paths.
   - Use 'fill' attribute instead of 'style' attribute in paths.
   - Remove the last unneeded "line to" command in each path.
-  
+
   For example SVG from AutoTrace like this:
-  
+
   <svg width="350" height="318">
   <path style="fill:#ded6aa; stroke:none;" d="M11 0L11 9L12 9L11 0z"/>
   <path style="fill:#685a37; stroke:none;" d="M12 0L2 12L13 12L12 0z"/>
   </svg>
-  
+
   Is converted by Delineate to this:
-  
+
   <svg width="350" height="318">
   <g stroke="none">
   <path fill="#ded6aa" d="M11 0L11 9L12 9z"/>
@@ -62,7 +70,7 @@ From 0.2 to 0.3
   This may reduce file size further when there are many paths and a
   limited number of colours. For example, if create styles is turned on,
   Delineate would change the above SVG to:
-  
+
   <svg width="350" height="318">
   <g stroke="none">
   <path class="a" d="M11 0L11 9L12 9z"/>
@@ -75,7 +83,7 @@ From 0.2 to 0.3
   ]]></style>
   </defs>
   </svg>
-  
+
 - Split panes now allow the previous result view and/or the settings
   panel to be hidden.
 - Can see the number of paths in result SVG, next to the file size in

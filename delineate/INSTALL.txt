@@ -5,7 +5,7 @@ D E L I N E A T E   -   R A S T E R    T 0    S V G    C O N V E R T E R
 Installing - GNU/Linux & Mac OS X
 ---------------------------------
 
-1) You will need to have AutoTrace installed. Delineate 0.3 has been
+1) You will need to have AutoTrace installed. Delineate 0.3.1 has been
    developed and tested against AutoTrace 0.31.1. AutoTrace downloads
    and installation instructions can be found at:
 
@@ -16,17 +16,17 @@ Installing - GNU/Linux & Mac OS X
 
    http://java.sun.com/
 
-   
+
 3) Set your JAVA_HOME variable to the location where you have Java
    installed.
 
 
-4) Extract delineate-0.3.tar.gz on to your machine
+4) Extract delineate-0.3.1.tar.gz on to your machine
 
 
 5) To run:
 
-   cd delineate/0.3
+   cd delineate/0.3.1
    chmod a+x delineate.sh
    ./delineate.sh
 
@@ -34,7 +34,7 @@ Installing - GNU/Linux & Mac OS X
 Installing - Windows
 --------------------
 
-1) You will need to have AutoTrace installed. Delineate 0.3 has been
+1) You will need to have AutoTrace installed. Delineate 0.3.1 has been
    developed and tested against AutoTrace 0.31.1. AutoTrace downloads
    and installation instructions can be found at:
 
@@ -42,7 +42,7 @@ Installing - Windows
 
 
 2) Put the AutoTrace install directory on to your system Path.
-   
+
    In Windows XP you can change the path by going to:
 
    Start ->Settings ->Control Panel ->System ->Advanced ->
@@ -59,25 +59,25 @@ Installing - Windows
 
 4) Set your JAVA_HOME environment variable to the location where you
    have Java installed.
-   
+
    In Windows XP you can add this environment variable by going to:
 
    Start ->Settings ->Control Panel ->System ->Advanced ->
    Environment Variables
-   
+
    Click the New button:
    - enter the variable name as JAVA_HOME, and
    - enter the variable value as the location where Java is installed.
-   
+
    For example:
      Variable name: JAVA_HOME
      Variable value: C:\Program Files\J2SDK_1.4.1_02
 
 
-5) Extract delineate-0.3.zip on to your machine
+5) Extract delineate-0.3.1.zip on to your machine
 
 
 6) To run:
 
-   Go to the directory <install dir>/delineate/0.3
+   Go to the directory <install dir>/delineate/0.3.1
    double click on or run the file: delineate.bat

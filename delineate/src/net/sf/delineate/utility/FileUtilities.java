@@ -27,6 +27,15 @@ import java.io.File;
  */
 public class FileUtilities {
 
+//    static {
+//        Properties properties = System.getProperties();
+//        Enumeration enumeration = properties.propertyNames();
+//        while(enumeration.hasMoreElements()) {
+//            String name = (String)enumeration.nextElement();
+//            System.out.println(name + " " + properties.get(name));
+//        }
+//    }
+
     public static File getFile(String uri) {
         String pathname = uri.substring(uri.indexOf(':')  + 1);
         File file = new File(pathname);
@@ -56,6 +65,14 @@ public class FileUtilities {
             }
         }
         return size;
+    }
+
+    public static String normalizeFileName(String value) {
+        if(value.indexOf(' ') != -1) {
+            value = '"' + value + '"';
+        }
+
+        return value;
     }
 
 }

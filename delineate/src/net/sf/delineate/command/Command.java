@@ -19,9 +19,9 @@
  */
 package net.sf.delineate.command;
 
-import net.sf.delineate.command.Parameter;
-
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -72,22 +72,49 @@ public class Command {
         Parameter parameter = getParameter(name);
 
         if(!parameter.value.equals(value)) {
+//            if(name.equals(Command.INPUT_FILE_PARAMETER) || name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+//                value = FileUtilities.normalizeFileName(value);
+//            }
             parameter.value = value;
-        }
-        if(notify) {
-            changeListener.valueChanged(parameter);
+
+            if(notify) {
+                changeListener.valueChanged(parameter);
+            }
         }
     }
 
     public String getCommand() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer("autotrace ");
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
             String parameterSetting = parameter.parameterSetting();
             buffer.append(parameterSetting);
         }
-        String command = "autotrace " + buffer.toString();
+        String command =  buffer.toString();
         return command;
+    }
+
+    public String[] getCommandAsArray() {
+        List commandList = new ArrayList();
+
+        commandList.add("autotrace");
+
+        for(int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            String option = parameter.parameterOption();
+
+            if(option.length() > 0) {
+                commandList.add(option);
+            }
+
+            String value = parameter.parameterOptionValue();
+            if(value.length() > 0) {
+                commandList.add(value);
+            }
+        }
+
+        String[] commandArray = (String[])commandList.toArray(new String[commandList.size()]);
+        return commandArray;
     }
 
     private Parameter getParameter(String name) {
@@ -140,13 +167,20 @@ public class Command {
                     if(!name.equals(OUTPUT_FILE_PARAMETER)) {
                         setParameterValue(name, value, true);
                     }
+
+                    if(value.charAt(0) == '\"') {
+                        while(value.charAt(value.length() - 1) != '\"') {
+                            value = tokenizer.nextToken(); // absorb output "file name"
+                        }
+                    }
+
                     name = tokenizer.nextToken();
+
                 } else {
                     name = value;
                 }
             } else if(name.charAt(0) == '\"') {
                 name += ' ' + tokenizer.nextToken();
-                System.out.println("name " + name);
             }
         }
     }

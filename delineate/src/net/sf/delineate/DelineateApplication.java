@@ -42,6 +42,9 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  * GUI for converting raster images to SVG using AutoTrace
@@ -83,7 +86,7 @@ public class DelineateApplication {
         frame.setContentPane(splitPane);
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
-        frame.setBounds(130, 30, 800, 700);
+        frame.setBounds(130, 0, 800, 735);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -149,11 +152,23 @@ public class DelineateApplication {
                     try {
                         svgViewerController.movePreviousSvg();
 
-                        String command = settingsPanel.getCommand();
-                        System.out.println(command);
+                        String[] commandArray = settingsPanel.getCommandAsArray();
+                        System.out.println(settingsPanel.getCommand());
 
-                        Process process = Runtime.getRuntime().exec(command);
+                        Runtime runtime = Runtime.getRuntime();
+                        Process process = runtime.exec(commandArray, null, null);
+                        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
                         process.waitFor();
+
+                        if(errorReader.ready()) {
+                            StringBuffer buffer = new StringBuffer(errorReader.readLine());
+                            while(errorReader.ready()) {
+                                buffer.append('\n' + errorReader.readLine());
+                            }
+                            throw new RuntimeException(buffer.toString());
+                        }
+
+                        new BufferedInputStream(process.getErrorStream());
                         final String outputFile = settingsPanel.getOutputFile();
                         svgViewerController.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgViewerController.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
@@ -161,7 +176,7 @@ public class DelineateApplication {
                         svgViewerController.load("file:" + outputFile);
                     } catch(Exception e) {
                         e.printStackTrace();
-                        if(e instanceof IOException) {// && e.getMessage().indexOf("autotrace: not found") != -1) {
+                        if(e instanceof IOException) {
                             showMessage("You must install AutoTrace to run conversions.\n" +
                                 "See INSTALL.txt file for details.", "AutoTrace not installed");
                             System.exit(0);

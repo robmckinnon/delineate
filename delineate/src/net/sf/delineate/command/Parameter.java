@@ -19,6 +19,8 @@
  */
 package net.sf.delineate.command;
 
+import net.sf.delineate.utility.FileUtilities;
+
 
 /**
  * Represents a Autotrace command parameter.
@@ -53,16 +55,38 @@ public class Parameter implements Comparable {
         if(enabled) {
             String settingValue = value;
             if(name.equals(Command.INPUT_FILE_PARAMETER)) {
-                if(value.indexOf(' ') != -1) {
-                    settingValue = '"' + value + '"';
-                }
-                return settingValue;
+                return FileUtilities.normalizeFileName(value);
             } else {
                 String option = '-' + name + ' ';
-                if(name.equals(Command.OUTPUT_FILE_PARAMETER) && value.indexOf(' ') != -1) {
-                    settingValue = '"' + value + '"';
+                if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+                    settingValue = FileUtilities.normalizeFileName(value);
                 }
                 return (value.length() == 0) ? option : option + settingValue + ' ';
+            }
+        } else {
+            return "";
+        }
+    }
+
+    public String parameterOption() {
+        if(enabled && !name.equals(Command.INPUT_FILE_PARAMETER)) {
+            String option = '-' + name;
+            return option;
+        } else {
+            return "";
+        }
+    }
+
+    public String parameterOptionValue() {
+        if(enabled) {
+            String settingValue = value;
+            if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+                return value;
+            } else {
+                if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+                    settingValue = value;
+                }
+                return (value.length() == 0) ? "" : settingValue;
             }
         } else {
             return "";

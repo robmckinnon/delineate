@@ -437,4 +437,8 @@ public class SettingsPanel {
         return command.getParameterEnabled(Command.CENTERLINE_PARAMETER);
     }
 
+    public String[] getCommandAsArray() {
+        return command.getCommandAsArray();
+    }
+
 }
