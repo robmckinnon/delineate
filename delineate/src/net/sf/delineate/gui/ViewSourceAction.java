@@ -1,20 +1,36 @@
+/*
+ * ViewSourceAction.java
+ *
+ * Copyright (C) 2003 Robert McKinnon
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package net.sf.delineate.gui;
 
-import org.apache.batik.util.ParsedURL;
 import org.apache.batik.util.MimeTypeConstants;
+import org.apache.batik.util.ParsedURL;
 import org.apache.batik.xml.XMLUtilities;
 import org.w3c.dom.svg.SVGDocument;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
-import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.event.ActionEvent;
-import java.awt.Font;
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.io.InputStream;
 import java.io.Reader;
 
@@ -24,49 +40,46 @@ import java.io.Reader;
 public class ViewSourceAction extends AbstractAction {
 
     SVGDocument svgDocument;
+    int x;
+    int y;
 
     public void setSvgDocument(SVGDocument svgDocument) {
         this.svgDocument = svgDocument;
     }
 
+    public void setLocation(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
     public void actionPerformed(ActionEvent e) {
-        if(svgDocument == null) {
-            return;
-        }
+        final ParsedURL url = new ParsedURL(svgDocument.getURL());
+        final JFrame frame = new JFrame(url.toString());
+        final JTextArea textArea = new JTextArea();
 
-        final ParsedURL u = new ParsedURL(svgDocument.getURL());
-
-        final JFrame fr = new JFrame(u.toString());
-        fr.setSize(200, 200);
-        final JTextArea ta = new JTextArea();
-        ta.setLineWrap(true);
-        ta.setFont(new Font("monospaced", Font.PLAIN, 12));
-
-        JScrollPane scroll = new JScrollPane();
-        scroll.getViewport().add(ta);
-        scroll.setVerticalScrollBarPolicy
-            (JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        fr.getContentPane().add(scroll, BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.getViewport().add(textArea);
+        frame.setContentPane(scrollPane);
 
         new Thread() {
             public void run() {
                 char[] buffer = new char[4096];
 
                 try {
-                    Document doc = new PlainDocument();
-                    InputStream is = u.openStream(MimeTypeConstants.MIME_TYPES_SVG);
+                    Document document = new PlainDocument();
+                    InputStream inputStream = url.openStream(MimeTypeConstants.MIME_TYPES_SVG);
+                    Reader reader = XMLUtilities.createXMLDocumentReader(inputStream);
+                    int length;
 
-                    Reader in = XMLUtilities.createXMLDocumentReader(is);
-                    int len;
-                    while((len = in.read(buffer, 0, buffer.length)) != -1) {
-                        doc.insertString(doc.getLength(),
-                            new String(buffer, 0, len), null);
+                    while((length = reader.read(buffer, 0, buffer.length)) != -1) {
+                        document.insertString(document.getLength(), new String(buffer, 0, length), null);
                     }
 
-                    ta.setDocument(doc);
-                    ta.setEditable(false);
-                    ta.setBackground(Color.white);
-                    fr.show();
+                    textArea.setDocument(document);
+                    textArea.setEditable(false);
+
+                    frame.setBounds(x, y, 600, 200);
+                    frame.show();
                 } catch(Exception ex) {
                     ex.printStackTrace();
                 }

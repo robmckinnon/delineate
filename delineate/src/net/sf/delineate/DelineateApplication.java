@@ -20,7 +20,7 @@
 package net.sf.delineate;
 
 import net.sf.delineate.gui.SettingsPanel;
-import net.sf.delineate.gui.SvgViewerPanel;
+import net.sf.delineate.gui.SvgViewerController;
 
 import javax.swing.JFrame;
 import javax.swing.JButton;
@@ -41,9 +41,9 @@ public class DelineateApplication {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
         JFrame frame = new JFrame("Delineate - raster to SVG converter");
-        final SvgViewerPanel svgViewerPanel = new SvgViewerPanel(frame);
+        final SvgViewerController svgViewerController = new SvgViewerController(frame);
 
-        JButton button = initDelineateButton(settingsPanel, svgViewerPanel);
+        JButton button = initDelineateButton(settingsPanel, svgViewerController);
 
         JPanel buttonPanel = new JPanel();
 //        buttonPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
@@ -60,8 +60,7 @@ public class DelineateApplication {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(wrapperPanel, BorderLayout.EAST);
-        panel.add(svgViewerPanel.createComponents());
-        panel.add(svgViewerPanel.getStatusLabel(), BorderLayout.SOUTH);
+        panel.add(svgViewerController.getSvgViewerPanels());
 
         frame.setContentPane(panel);
         frame.setBounds(130, 30, 800, 700);
@@ -69,18 +68,18 @@ public class DelineateApplication {
         frame.setVisible(true);
     }
 
-    private JButton initDelineateButton(final SettingsPanel settingsPanel, final SvgViewerPanel svgViewerPanel) {
+    private JButton initDelineateButton(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         JButton button = new JButton("Run");
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                svgViewerPanel.movePreviousSvg();
+                viewerController.movePreviousSvg();
                 String command = settingsPanel.getCommand();
 
                 try {
                     Process process = Runtime.getRuntime().exec(command);
                     process.waitFor();
                     String outputFile = settingsPanel.getOutputFile();
-                    svgViewerPanel.load("file:" + outputFile);
+                    viewerController.load("file:" + outputFile);
                 } catch(Exception e) {
                     e.printStackTrace();
                 }

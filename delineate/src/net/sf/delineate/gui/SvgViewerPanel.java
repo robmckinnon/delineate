@@ -19,6 +19,7 @@
  */
 package net.sf.delineate.gui;
 
+import net.sf.delineate.utility.FileUtilities;
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
@@ -26,200 +27,122 @@ import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
 import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.swing.svg.SVGDocumentLoaderAdapter;
 import org.apache.batik.swing.svg.SVGDocumentLoaderEvent;
+import org.w3c.dom.svg.SVGDocument;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.SpringLayout;
-import javax.swing.SpringUtilities;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
-import java.net.MalformedURLException;
-
-import net.sf.delineate.gui.ScrollableJSVGCanvas;
 
 /**
  * Panel for viewing SVG files.
  * @author robmckinnon@users.sourceforge.net
  */
 public class SvgViewerPanel {
-    private String uri;
-    private JFrame frame;
-    private JSVGCanvas svgCanvasB;
-    private JSVGCanvas svgCanvasA;
 
-    private JLabel statusLabel = new JLabel("Ready.");
-    private JPanel contentPanel = new JPanel(new SpringLayout());
+    private final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
+    private final JLabel statusLabel = new JLabel("Ready.");
+    private final JLabel sizeLabel = new JLabel("");
     private ViewSourceAction viewSourceAction = new ViewSourceAction();
 
-    public SvgViewerPanel(JFrame f) {
-        frame = f;
-    }
+    public SvgViewerPanel(boolean isPreviousResult) {
+        final String resultLabel = isPreviousResult ? "Previous result: " : "Result: ";
 
-    public JComponent createComponents() {
-        svgCanvasA = initSvgCanvas();
-        svgCanvasB = initSvgCanvas();
+        svgCanvas.addSVGDocumentLoaderListener(new
+            SVGDocumentLoaderAdapter() {
+                public void documentLoadingStarted(SVGDocumentLoaderEvent e) {
+                    sizeLabel.setText("");
+                    statusLabel.setText("Loading...");
+                }
+            });
 
-        contentPanel.add(new JScrollPane(svgCanvasA));
-        contentPanel.add(new JScrollPane(svgCanvasB));
-        contentPanel.setBorder(BorderFactory.createTitledBorder("Result SVG"));
-
-        SpringUtilities.makeCompactGrid(contentPanel, 2, 1, 1, 1, 4, 4);
-
-        return contentPanel;
-    }
-
-    public JLabel getStatusLabel() {
-        return statusLabel;
-    }
-
-    public JButton getLoadButton() {
-        JButton button = new JButton("Load...");
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                load();
+        svgCanvas.addGVTTreeBuilderListener(new GVTTreeBuilderAdapter() {
+            public void gvtBuildStarted(GVTTreeBuilderEvent e) {
+                statusLabel.setText("Interpreting...");
             }
         });
-        return button;
+
+        svgCanvas.addGVTTreeRendererListener(new GVTTreeRendererAdapter() {
+            public void gvtRenderingPrepare(GVTTreeRendererEvent e) {
+                statusLabel.setText("Rendering...");
+            }
+
+            public void gvtRenderingCompleted(GVTTreeRendererEvent e) {
+                String uri = svgCanvas.getURI();
+                File file = FileUtilities.getFile(uri);
+                String fileSize = FileUtilities.getFileSize(file);
+                statusLabel.setText(resultLabel + file.getName());
+                sizeLabel.setText(fileSize);
+            }
+        });
+    }
+
+    public void setURI(String uri) {
+        svgCanvas.setSVGDocument(null);  // hack to prevent problem loading relative URI
+        svgCanvas.setURI(uri);
+    }
+
+    public JPanel getViewerPanel() {
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        statusPanel.add(statusLabel, BorderLayout.WEST);
+        statusPanel.add(sizeLabel, BorderLayout.EAST);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JScrollPane(svgCanvas));
+        panel.add(statusPanel, BorderLayout.SOUTH);
+
+        JMenuItem menuItem = new JMenuItem(viewSourceAction);
+        menuItem.setText("View source");
+        final JPopupMenu popupMenu = new JPopupMenu();
+        popupMenu.add(menuItem);
+
+        MouseListener popupListener = getPopupListener(popupMenu);
+
+        svgCanvas.addMouseListener(popupListener);
+
+        return panel;
+    }
+
+    private MouseListener getPopupListener(final JPopupMenu popupMenu) {
+        MouseListener popupListener = new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if(e.isPopupTrigger()) {
+                    SVGDocument svgDocument = svgCanvas.getSVGDocument();
+                    if(svgDocument == null) {
+                        viewSourceAction.setEnabled(false);
+                    } else {
+                        viewSourceAction.setSvgDocument(svgDocument);
+                        viewSourceAction.setLocation(e.getX(), e.getY());
+                        viewSourceAction.setEnabled(true);
+                    }
+
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        };
+
+        return popupListener;
     }
 
     public JButton getViewSourceButton() {
         JButton button = new JButton(viewSourceAction);
         button.setText("View source");
         return button;
-    }
-
-    public JButton getReloadButton() {
-        JButton button = new JButton("Reload...");
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                load(uri);
-            }
-        });
-        return button;
-    }
-
-    private void load() {
-        JFileChooser fileChooser = new JFileChooser(".");
-        int choice = fileChooser.showOpenDialog(contentPanel);
-
-        if(choice == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            try {
-                load(file.toURL().toString());
-            } catch(MalformedURLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void movePreviousSvg() {
-        if(uri != null) {
-            File file = getFile(uri);
-            File previousFile = new File(file.getParent(), file.getName() + '~');
-            previousFile.delete();
-            file.renameTo(previousFile);
-            svgCanvasB.setSVGDocument(null); // hack to prevent problem loading relative URI
-            svgCanvasB.setURI(uri + '~');
-        }
-    }
-
-    public void load(String uri) {
-        this.uri = uri;
-        System.out.println("loading " + uri);
-        svgCanvasA.setSVGDocument(null); // hack to prevent problem loading relative URI
-        svgCanvasA.setURI(uri);
-    }
-
-    private JSVGCanvas initSvgCanvas() {
-        final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
-
-        svgCanvas.addSVGDocumentLoaderListener(new
-            SVGDocumentLoaderAdapter() {
-                public void documentLoadingStarted(SVGDocumentLoaderEvent e) {
-                    setStatus("Document loading...");
-                }
-
-                public void documentLoadingCompleted(SVGDocumentLoaderEvent e) {
-                    setStatus("Document loaded.");
-                }
-            });
-
-        svgCanvas.addGVTTreeBuilderListener(new GVTTreeBuilderAdapter() {
-            public void gvtBuildStarted(GVTTreeBuilderEvent e) {
-                setStatus("Build started...");
-            }
-
-            public void gvtBuildCompleted(GVTTreeBuilderEvent e) {
-                setStatus("Build done.");
-                frame.repaint();
-            }
-        });
-
-        svgCanvas.addGVTTreeRendererListener(new
-            GVTTreeRendererAdapter() {
-                public void gvtRenderingPrepare(GVTTreeRendererEvent e) {
-                    setStatus("Rendering started...");
-                }
-
-                public void gvtRenderingCompleted(GVTTreeRendererEvent e) {
-                    String uri = svgCanvas.getURI();
-                    File file = getFile(uri);
-                    setStatus(file + "    " + getFileSize(file));
-
-                }
-            });
-
-        return svgCanvas;
-    }
-
-    private File getFile(String uri) {
-        String pathname = uri.substring(uri.indexOf(':')  + 1);
-        File file = new File(pathname);
-        return file;
-    }
-
-    private String getFileSize(File file) {
-        String size;
-
-        long bytes = file.length();
-
-        if(bytes < 1024) {
-            size = bytes + "b";
-        } else {
-            float kb = bytes / 1024F;
-
-            if(kb < 1024) {
-                kb = Math.round(kb * 10) / 10F;
-                size = kb + "kb";
-            } else {
-                float mb = kb / 1024;
-                mb = Math.round(mb * 10) / 10F;
-
-                size = mb + "mb";
-            }
-        }
-        return size;
-    }
-
-    private void setStatus(String text) {
-        statusLabel.setText(text);
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Batik");
-        SvgViewerPanel app = new SvgViewerPanel(frame);
-        frame.setContentPane(app.createComponents());
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        frame.setBounds(200, 100, 400, 400);
-        frame.setVisible(true);
     }
 
 }

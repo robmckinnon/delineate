@@ -258,12 +258,21 @@ swf, emf, mif, er, dxf, epd, pdf, cgm or dr2d can be used.</description>
     <description>print the version number of this program.</description>
   </parameter>
  -->
+<!--
   <parameter>
     <name>width-weight-factor</name>
     <optional>true</optional>
     <enabled>false</enabled>
+    <default>1.0</default>
+    <range>
+      <use-whole-numbers>false</use-whole-numbers>
+      <min>0</min>
+      <max>1</max>
+      <step>0.01</step>
+    </range>
     <description>Weight factor for fitting the line width.</description>
   </parameter>
+ -->
 
 </parameters>
 
