@@ -33,8 +33,8 @@ public class Command {
     private CommandChangeListener changeListener;
     private Parameter[] parameters;
     int parameterCount = 0;
-    private static final String INPUT_FILE_PARAMETER = "input-file";
-    private static final String OUTPUT_FILE_PARAMETER = "output-file";
+    public static final String INPUT_FILE_PARAMETER = "input-file";
+    public static final String OUTPUT_FILE_PARAMETER = "output-file";
 
     public Command(int totalParameterCount, CommandChangeListener listener) {
         parameters = new Parameter[totalParameterCount];

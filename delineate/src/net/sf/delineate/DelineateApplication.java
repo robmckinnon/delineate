@@ -44,11 +44,12 @@ import java.awt.event.KeyEvent;
 public class DelineateApplication {
     private static final String CONVERT__IMAGE__ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
+    private SvgViewerController svgViewerController;
 
     public DelineateApplication(String parameterFile) throws Exception {
         final SettingsPanel settingsPanel = new SettingsPanel(parameterFile);
 
-        final SvgViewerController svgViewerController = new SvgViewerController();
+        svgViewerController = new SvgViewerController();
 
         JButton button = initConvertButton(settingsPanel, svgViewerController);
 
@@ -110,6 +111,8 @@ public class DelineateApplication {
             viewerController.movePreviousSvg();
 
             String command = settingsPanel.getCommand();
+            svgViewerController.setStatus("Converting...");
+            System.out.println(command);
 
             try {
                 Process process = Runtime.getRuntime().exec(command);

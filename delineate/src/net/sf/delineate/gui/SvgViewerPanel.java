@@ -95,19 +95,19 @@ public class SvgViewerPanel {
             SVGDocumentLoaderAdapter() {
                 public void documentLoadingStarted(SVGDocumentLoaderEvent e) {
                     sizeLabel.setText("");
-                    statusLabel.setText("Loading...");
+                    setStatus("Loading...");
                 }
             });
 
         svgCanvas.addGVTTreeBuilderListener(new GVTTreeBuilderAdapter() {
             public void gvtBuildStarted(GVTTreeBuilderEvent e) {
-                statusLabel.setText("Interpreting...");
+                setStatus("Interpreting...");
             }
         });
 
         svgCanvas.addGVTTreeRendererListener(new GVTTreeRendererAdapter() {
             public void gvtRenderingPrepare(GVTTreeRendererEvent e) {
-                statusLabel.setText("Rendering...");
+                setStatus("Rendering...");
             }
 
 
@@ -115,7 +115,7 @@ public class SvgViewerPanel {
                 String uri = svgCanvas.getURI();
                 File file = FileUtilities.getFile(uri);
                 String fileSize = FileUtilities.getFileSize(file);
-                statusLabel.setText(resultText + file.getName());
+                setStatus(resultText + file.getName());
                 sizeLabel.setText(fileSize);
                 ViewSourceAction viewSourceAction = (ViewSourceAction)getAction(VIEW_SOURCE_ACTION);
                 viewSourceAction.setSvgDocument(svgCanvas.getSVGDocument());
@@ -123,6 +123,10 @@ public class SvgViewerPanel {
             }
         });
 
+    }
+
+    public void setStatus(String text) {
+        statusLabel.setText(text);
     }
 
     public Action getAction(String actionKey) {

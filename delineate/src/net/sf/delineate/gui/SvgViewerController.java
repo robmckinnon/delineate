@@ -178,6 +178,10 @@ public class SvgViewerController {
         frame.setVisible(true);
     }
 
+    public void setStatus(String text) {
+        svgViewerA.setStatus(text);
+    }
+
     private class ScrollListener implements AdjustmentListener {
         private JScrollBar horizontalBar;
         private JScrollBar verticalBar;

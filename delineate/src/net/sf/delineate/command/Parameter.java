@@ -51,11 +51,18 @@ public class Parameter implements Comparable {
 
     public String parameterSetting() {
         if(enabled) {
-            if(name.equals("input-file")) {
-                return value;
+            String settingValue = value;
+            if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+                if(value.indexOf(' ') != -1) {
+                    settingValue = '"' + value + '"';
+                }
+                return settingValue;
             } else {
                 String option = '-' + name + ' ';
-                return value.length() == 0 ? option : option + value + ' ';
+                if(name.equals(Command.OUTPUT_FILE_PARAMETER) && value.indexOf(' ') != -1) {
+                    settingValue = '"' + value + '"';
+                }
+                return (value.length() == 0) ? option : option + settingValue + ' ';
             }
         } else {
             return "";

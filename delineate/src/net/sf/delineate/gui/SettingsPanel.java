@@ -76,6 +76,8 @@ public class SettingsPanel {
     private static final String SAVE_SETTINGS_ACTION = "SaveSettingsAction";
     private static final String LOAD_SETTINGS_ACTION = "LoadSettingsAction";
     private static final String DELETE_SETTINGS_ACTION = "DeleteSettingsAction";
+    private static final String INPUT_FILE_ACTION = "InputFileAction";
+    private static final String OUTPUT_FILE_ACTION = "OutputFileAction";
     private static final String DEFAULT_SETTING_NAME = "default";
 
     private JPanel panel;
@@ -445,19 +447,21 @@ public class SettingsPanel {
         boolean isFileParameter = name.endsWith("file");
         boolean isBgColorParameter = name.equals(BACKGROUND_COLOR_PARAMETER);
         final JPanel panel = new JPanel(new BorderLayout());
+        Component labelComponent = null;
 
         JButton button = null;
         if(!isFileParameter && !isBgColorParameter) {
             JLabel label = new JLabel(labelName);
             label.setToolTipText(desc);
-            panel.add(label, BorderLayout.WEST);
+            labelComponent = label;
         } else if(isBgColorParameter) {
             button = initColorChooserButton(labelName, panel);
-            panel.add(button, BorderLayout.WEST);
+            labelComponent = button;
         } else if(isFileParameter) {
-            button = initFileChooserButton(name, labelName);
-            panel.add(button, BorderLayout.WEST);
+            labelComponent = initFileChooserButton(name, labelName);
         }
+
+        panel.add(labelComponent, BorderLayout.WEST);
 
         if(optional) {
             JCheckBox checkBox = initCheckbox(name, desc, enabled, spinnerSlider, button);
@@ -494,11 +498,9 @@ public class SettingsPanel {
     }
 
     private JButton initFileChooserButton(final String name, String labelName) {
-        final JFileChooser fileChooser = new JFileChooser();
+        AbstractAction action = new AbstractAction() {
+            JFileChooser fileChooser = new JFileChooser();
 
-        JButton button = new JButton(labelName);
-        button.setToolTipText("Browse files");
-        button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int response = fileChooser.showOpenDialog((JComponent)e.getSource());
 
@@ -509,7 +511,17 @@ public class SettingsPanel {
                     command.setParameterValue(textField.getName(), textField.getText(), false);
                 }
             }
-        });
+        };
+
+        JButton button = null;
+
+        if(name.equals(Command.INPUT_FILE_PARAMETER)) {
+            button = initButton(labelName, INPUT_FILE_ACTION, KeyEvent.VK_I, action);
+        } else if(name.equals(Command.OUTPUT_FILE_PARAMETER)) {
+            button = initButton(labelName, OUTPUT_FILE_ACTION, KeyEvent.VK_O, action);
+        }
+
+        button.setToolTipText("Browse files");
         return button;
     }
 
