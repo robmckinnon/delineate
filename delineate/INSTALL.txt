@@ -1,0 +1,73 @@
+
+   D E L I N E A T E - R A S T E R    T 0    S V G    C O N V E R T E R
+
+
+Installing - GNU/Linux (& Mac OS X)
+-----------------------------------
+
+1) You will need to install AutoTrace on your machine.
+   Downloads and installation instructions can be found at:
+
+   http://autotrace.sourceforge.net/
+
+
+2) You will also need to have Java 1.4.1 or Java 1.4.2 installed:
+
+   http://java.sun.com/
+
+
+3) Set your JAVA_HOME variable to the location where you have Java installed.
+
+
+4) Extract delineate-0.2.tar.gz on to your machine
+
+
+5) To run:
+
+   cd delineate/0.2
+
+   chmod a+x delineate.sh
+
+   ./delineate.sh
+
+
+
+Installing - Windows
+--------------------
+
+1) You will need to install AutoTrace on your machine.
+   Downloads and installation instructions can be found at:
+
+   http://autotrace.sourceforge.net/
+
+
+2) Put the AutoTrace install directory on to your system Path.
+
+   In Windows XP you can change the path by going to:
+
+   Start ->Settings ->Control Panel ->System ->Advanced ->Environment Variables
+
+   Edit the Path variable, and append the AutoTrace install directory on to the end.
+
+
+3) You will also need to have Java 1.4.1 or Java 1.4.2 installed:
+
+   http://java.sun.com/
+
+
+4) Set your JAVA_HOME environment variable to the location where you have Java installed.
+
+   In Windows XP you can add this environment variable by going to:
+
+   Start ->Settings ->Control Panel ->System ->Advanced ->Environment Variables
+
+
+5) Extract delineate-0.2.zip on to your machine
+
+
+6) To run:
+
+   Go to the directory <install dir>/delineate/0.2
+
+   double click on or run the file: delineate.bat
+
