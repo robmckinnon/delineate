@@ -54,7 +54,7 @@ public class SvgViewerPanel {
     public static final String VIEW_SOURCE_ACTION = "ViewSource";
 
     private final JSVGCanvas svgCanvas = new ScrollableJSVGCanvas();
-    private final JLabel statusLabel = new JLabel("Ready.");
+    private final JLabel statusLabel = new JLabel(" ");
     private final JLabel sizeLabel = new JLabel("");
     private JPopupMenu popupMenu = new JPopupMenu();
     private int modifier;

@@ -111,10 +111,11 @@ public class DelineateApplication {
 
     private void convert(final SettingsPanel settingsPanel, final SvgViewerController viewerController) {
         if(settingsPanel.inputFileExists()) {
+            svgViewerController.setStatus("Converting...");
+
             viewerController.movePreviousSvg();
 
             String command = settingsPanel.getCommand();
-            svgViewerController.setStatus("Converting...");
             System.out.println(command);
 
             try {
