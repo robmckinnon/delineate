@@ -26,6 +26,10 @@ To install, see INSTALL.txt
 Change Log
 ----------
 
+0.4.1 to 0.4.2
+
+- Fixed bug that occurred when running group by color optimization in Windows.
+
 0.4 to 0.4.1
 
 - No longer use style attribute in output SVG, now use separate fill and stroke
