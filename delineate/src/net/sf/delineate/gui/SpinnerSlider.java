@@ -27,6 +27,7 @@ import javax.swing.event.ChangeEvent;
 import java.awt.Dimension;
 import java.text.NumberFormat;
 import java.text.DecimalFormat;
+import java.util.Locale;
 
 /**
  * Component combining JSpinner and JSlider together.
@@ -64,7 +65,7 @@ public class SpinnerSlider {
 
     public void setFractionDigitsLength(int fractionDigits) {
         if(numberFormat == null) {
-            numberFormat = new DecimalFormat();
+            numberFormat = DecimalFormat.getInstance(Locale.ENGLISH);
         }
 
         numberFormat.setMaximumFractionDigits(fractionDigits);

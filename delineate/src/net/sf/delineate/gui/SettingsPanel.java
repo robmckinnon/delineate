@@ -42,7 +42,7 @@ import javax.swing.SpringLayout;
 import javax.swing.SpringUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathExpressionException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -141,8 +141,7 @@ public class SettingsPanel implements RenderingListener {
 
     public File getInputFile() {
         String inputFile = command.getParameterValue(Command.INPUT_FILE_PARAMETER);
-        File file = new File(inputFile);
-        return file;
+        return new File(inputFile);
     }
 
     public void setInputFile(File file) {
@@ -164,7 +163,7 @@ public class SettingsPanel implements RenderingListener {
         setFileSizeText(Command.OUTPUT_FILE_PARAMETER, file);
     }
 
-    private JPanel initContentPane(XPathTool xpathTool) throws TransformerException {
+    private JPanel initContentPane(XPathTool xpathTool) throws XPathExpressionException {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setLayout(new SpringLayout());
         String commandName = xpathTool.string("/parameters/command/name");
@@ -242,9 +241,8 @@ public class SettingsPanel implements RenderingListener {
     public void showTracingApplicationSelectionDialog() {
         if(tracingAppFileChooser == null) {
             String dialogTitle = "Select location of " + command.getCommandName();
-            JFileChooser fileChooser = initFileChooser(dialogTitle);
 
-            this.tracingAppFileChooser = fileChooser;
+            this.tracingAppFileChooser = initFileChooser(dialogTitle);
         }
 
         int response = tracingAppFileChooser.showOpenDialog(panel);
@@ -267,9 +265,9 @@ public class SettingsPanel implements RenderingListener {
         return fileChooser;
     }
 
-    private void addParameter(JPanel panel, XPathTool xpath, String xpathPrefix, String name) throws TransformerException {
+    private void addParameter(JPanel panel, XPathTool xpath, String xpathPrefix, String name) throws XPathExpressionException {
         boolean optional = xpath.toBoolean("optional");
-        boolean enabled = optional ? xpath.toBoolean("enabled") : true;
+        boolean enabled = !optional || xpath.toBoolean("enabled");
 
         String value = xpath.string("default");
         String desc = xpath.string("description");
@@ -280,8 +278,8 @@ public class SettingsPanel implements RenderingListener {
             return;
         }
 
-        JComponent labelPanel = null;
-        JComponent controlComponent = null;
+        JComponent labelPanel;
+        JComponent controlComponent;
 
         if(xpath.count("range") != 1) {
             labelPanel = initLabelPanel(optional, enabled, null, desc, name, function);
@@ -470,11 +468,10 @@ public class SettingsPanel implements RenderingListener {
     }
 
     private JTextField getTextField(String key) {
-        JTextField textField = (JTextField)textFieldMap.get(key);
-        return textField;
+        return (JTextField)textFieldMap.get(key);
     }
 
-    private SpinnerNumberModel initSpinnerModel(boolean useWholeNumbers, XPathTool xpath, String defaultValue) throws TransformerException {
+    private SpinnerNumberModel initSpinnerModel(boolean useWholeNumbers, XPathTool xpath, String defaultValue) throws XPathExpressionException {
         SpinnerNumberModel model;
         if(useWholeNumbers) {
             int value = Integer.parseInt(defaultValue);

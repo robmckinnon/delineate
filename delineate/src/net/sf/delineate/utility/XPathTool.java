@@ -20,8 +20,6 @@
 
 package net.sf.delineate.utility;
 
-import org.apache.xpath.XPathAPI;
-import org.apache.xpath.objects.XObject;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -29,7 +27,9 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathConstants;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,46 +56,45 @@ public class XPathTool {
         factory.setValidating(false);
 
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(source);
-        return document;
+        return builder.parse(source);
     }
 
 
     /**
      * Returns string result of enclosing expression in a XPath <code>string</code> function and evaluating it.
      */
-    public static String string(String expression, Document document) throws TransformerException {
-        XObject xObject = XPathAPI.eval(document, "string(" + expression + ")");
-        return xObject.xstr().toString();
+    public static String string(String expression, Document document) throws XPathExpressionException {
+        return XPathFactory.newInstance().newXPath().evaluate("string(" + expression + ")", document);
+//        XObject xObject = XPathAPI.eval(document, "string(" + expression + ")");
+//        return xObject.xstr().toString();
     }
 
 
     /**
      * Returns string result of enclosing expression in a XPath <code>count</code> function and evaluating it.
      */
-    public static int count(String expression, Document document) throws TransformerException {
-        XObject xObject = XPathAPI.eval(document, "count(" + expression + ")");
-        return Integer.parseInt(xObject.xstr().toString());
+    public static int count(String expression, Document document) throws XPathExpressionException {
+        return ((Number)XPathFactory.newInstance().newXPath().evaluate("count(" + expression + ")", document, XPathConstants.NUMBER)).intValue();
+//        XObject xObject = XPathAPI.eval(document, "count(" + expression + ")");
+//        return Integer.parseInt(xObject.xstr().toString());
     }
 
 
     /**
      * Returns string result of enclosing expression in a XPath <code>count</code> function and evaluating it.
      */
-    public static boolean toBoolean(String expression, Document document) throws TransformerException {
+    public static boolean toBoolean(String expression, Document document) throws XPathExpressionException {
         String string = XPathTool.string(expression, document);
 //        boolean bool = Boolean.getBoolean(string.trim()); doesn't work for some reason
         return string.equals("true");
     }
 
-    public static double toDouble(String expression, Document document) throws TransformerException {
-        Double doub = new Double(XPathTool.string(expression, document));
-        return doub.doubleValue();
+    public static double toDouble(String expression, Document document) throws XPathExpressionException {
+        return new Double(XPathTool.string(expression, document));
     }
 
-    public static int toInt(String expression, Document document) throws TransformerException {
-        Integer integer = new Integer(XPathTool.string(expression, document));
-        return integer.intValue();
+    public static int toInt(String expression, Document document) throws XPathExpressionException {
+        return new Integer(XPathTool.string(expression, document));
     }
 
     public XPathTool(File file) throws ParserConfigurationException, IOException, SAXException {
@@ -106,26 +105,26 @@ public class XPathTool {
         this.xpathPrefix = xpathPrefix;
     }
 
-    public String string(String xpathSuffix) throws TransformerException {
+    public String string(String xpathSuffix) throws XPathExpressionException {
         return XPathTool.string(xpathPrefix + xpathSuffix, document);
     }
 
 
-    public int count(String xpathSuffix) throws TransformerException {
+    public int count(String xpathSuffix) throws XPathExpressionException {
         return XPathTool.count(xpathPrefix + xpathSuffix, document);
     }
 
 
-    public boolean toBoolean(String xpathSuffix) throws TransformerException {
+    public boolean toBoolean(String xpathSuffix) throws XPathExpressionException {
         return XPathTool.toBoolean(xpathPrefix + xpathSuffix, document);
     }
 
 
-    public double toDouble(String xpathSuffix) throws TransformerException {
+    public double toDouble(String xpathSuffix) throws XPathExpressionException {
         return XPathTool.toDouble(xpathPrefix + xpathSuffix, document);
     }
 
-    public int toInt(String xpathSuffix) throws TransformerException {
+    public int toInt(String xpathSuffix) throws XPathExpressionException {
         return XPathTool.toInt(xpathPrefix + xpathSuffix, document);
     }
 

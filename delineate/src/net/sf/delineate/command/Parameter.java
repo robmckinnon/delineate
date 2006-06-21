@@ -108,8 +108,7 @@ public class Parameter implements Comparable {
 
     public String parameterOption(String optionIndicator) {
         if(enabled && !isInputFileParameter()) {
-            String option = optionIndicator + name;
-            return option;
+            return optionIndicator + name;
         } else {
             return "";
         }
@@ -150,7 +149,7 @@ public class Parameter implements Comparable {
             } else if(obj instanceof Parameter) {
                 return name.compareTo(((Parameter)obj).name);
             } else {
-                return name.compareTo(obj);
+                return name.compareTo(obj.toString());
             }
         } else {
             throw new IllegalStateException("illegal state, this is not a Parameter " + String.valueOf(obj));

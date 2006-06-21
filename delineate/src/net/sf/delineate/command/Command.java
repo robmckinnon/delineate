@@ -103,12 +103,11 @@ public class Command {
 
     public String getCommand() {
         StringBuffer buffer = new StringBuffer(tracingApplication + " ");
-        for(int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
+        for (Parameter parameter : parameters) {
             String parameterSetting = parameter.parameterSetting(optionIndicator);
             buffer.append(parameterSetting);
         }
-        String command =  buffer.toString();
+        String command = buffer.toString();
         return command;
     }
 
@@ -117,16 +116,15 @@ public class Command {
 
         commandList.add(tracingApplication);
 
-        for(int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
+        for (Parameter parameter : parameters) {
             String option = parameter.parameterOption(optionIndicator);
 
-            if(option.length() > 0) {
+            if (option.length() > 0) {
                 commandList.add(option);
             }
 
             String value = parameter.parameterOptionValue();
-            if(value.length() > 0) {
+            if (value.length() > 0) {
                 commandList.add(value);
             }
         }
@@ -160,20 +158,16 @@ public class Command {
     }
 
     public void setCommandDefaultValues() {
-        for(int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
-
-            if(!parameter.isInputFileParameter() && !parameter.isOutputFileParameter()) {
+        for (Parameter parameter : parameters) {
+            if (!parameter.isInputFileParameter() && !parameter.isOutputFileParameter()) {
                 setParameterValue(parameter.getName(), parameter.getDefaultValue(), true);
             }
         }
     }
 
     public void setCommand(String command) {
-        for(int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
-
-            if(!parameter.isInputFileParameter()) {
+        for (Parameter parameter : parameters) {
+            if (!parameter.isInputFileParameter()) {
                 setParameterEnabled(parameter.getName(), false, true);
             }
         }

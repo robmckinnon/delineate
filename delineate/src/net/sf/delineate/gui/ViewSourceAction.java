@@ -128,7 +128,7 @@ public class ViewSourceAction extends AbstractAction {
     private void setDocument(final Document document) {
         textArea.setDocument(document);
 
-        frame.setTitle(url.toString());
+        frame.setTitle(url);
         frame.setBounds(x, y, 700, 650);
         frame.setVisible(true);
     }

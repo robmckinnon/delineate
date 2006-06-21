@@ -37,7 +37,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.io.File;
 import java.io.IOException;
 
@@ -96,7 +95,7 @@ public class DelineateApplication {
         final SettingsPanel settingsPanel = new SettingsPanel(xpathTool);
         svgViewerController.addRenderingListener(settingsPanel);
 
-        JPanel optionsPanel = null;
+        JPanel optionsPanel;
         if(isOptionsPanel) {
             optionsPanel = initOptionsPanel(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -126,8 +125,7 @@ public class DelineateApplication {
         convertPanel.add(button);
         this.convertPanelList.add(convertPanel);
 
-        JPanel controlPanel = createControlPanel(settingsPanel, optionsPanel, convertPanel);
-        return controlPanel;
+        return createControlPanel(settingsPanel, optionsPanel, convertPanel);
     }
 
     private SvgViewerController initSvgViewerController() {
@@ -227,8 +225,11 @@ public class DelineateApplication {
         final File file = settingsPanel.getInputFile();
 
         if(file.exists()) {
-            while(!assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0])) {
+            if(!assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0])) {
                 settingsPanel.showTracingApplicationSelectionDialog();
+                if(!assertTracingApplicationInstalled(settingsPanel.getCommandName(), settingsPanel.getCommandAsArray()[0])) {
+                    return;
+                }
             }
 
             disableGui();
@@ -293,8 +294,8 @@ public class DelineateApplication {
     }
 
     private void setConvertImageActionEnabled(boolean enabled) {
-        for (Iterator iterator = convertPanelList.iterator(); iterator.hasNext();) {
-            JPanel panel = (JPanel) iterator.next();
+        for (Object aConvertPanelList : convertPanelList) {
+            JPanel panel = (JPanel)aConvertPanelList;
             Action action = panel.getActionMap().get(CONVERT_IMAGE_ACTION);
             action.setEnabled(enabled);
         }
