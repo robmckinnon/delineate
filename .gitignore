@@ -1,0 +1,10 @@
+build/
+delineate/.idea/
+delineate/delineate.iml
+delineate/img/walk.svg
+delineate/img/walk.svg~
+delineate/out/
+delineate/settings/settings-autotrace.prop
+delineate/settings/settings-potrace.prop
+delineate/settings/settings.prop
+temp/
