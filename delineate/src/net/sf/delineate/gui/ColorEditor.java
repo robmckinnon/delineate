@@ -50,7 +50,7 @@ import java.util.Set;
 public class ColorEditor {
 
     private final DefaultSwatchChooserPanelCopy colorPanel = new DefaultSwatchChooserPanelCopy();
-    private final Set colorSet = new HashSet();
+    private final Set<String> colorSet = new HashSet<String>();
     private final JComboBox colorCombo = new JComboBox();
     private final JDialog colorDialog;
     private final Command command;
@@ -102,6 +102,7 @@ public class ColorEditor {
         return itemListener;
     }
 
+    @SuppressWarnings("unchecked")
     private KeyAdapter initColorKeyListener() {
         return new KeyAdapter() {
             public void keyReleased(KeyEvent event) {
@@ -139,6 +140,7 @@ public class ColorEditor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void setColor(String colorText) {
         try {
             ColorUtilities.getColor(colorText);

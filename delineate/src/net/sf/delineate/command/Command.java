@@ -40,7 +40,7 @@ public class Command {
     private Parameter[] parameters;
 
     /** key is function or name, value is parameter */
-    private Map parameterMap = new HashMap();
+    private Map<String, Parameter> parameterMap = new HashMap<String, Parameter>();
 
     int parameterCount = 0;
 
@@ -112,7 +112,7 @@ public class Command {
     }
 
     public String[] getCommandAsArray() {
-        List commandList = new ArrayList();
+        List<String> commandList = new ArrayList<String>();
 
         commandList.add(tracingApplication);
 

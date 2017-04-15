@@ -65,10 +65,10 @@ public class SettingsPanel implements RenderingListener {
     private static final String OUTPUT_FILE_ACTION = "OutputFileAction";
     private static final String BACKGROUND_COLOR_ACTION = "BackgroundColorAction";
 
-    private final Map textFieldMap = new HashMap(5);
-    private final Map fileSizeLabelMap = new HashMap(5);
-    private final Map checkBoxMap = new HashMap(23);
-    private final Map spinnerSliderMap = new HashMap(23);
+    private final Map<String, JTextField> textFieldMap = new HashMap<String, JTextField>(5);
+    private final Map<String, JLabel> fileSizeLabelMap = new HashMap<String, JLabel>(5);
+    private final Map<String, JCheckBox> checkBoxMap = new HashMap<String, JCheckBox>(23);
+    private final Map<String, SpinnerSlider> spinnerSliderMap = new HashMap<String, SpinnerSlider>(23);
 
     private final JPanel panel;
     private Command command;
@@ -175,7 +175,7 @@ public class SettingsPanel implements RenderingListener {
         command = new Command(commandName, optionIndicator, parameterCount, new Command.CommandChangeListener() {
             public void enabledChanged(Parameter parameter) {
                 String name = parameter.getName();
-                JCheckBox checkBox = (JCheckBox)checkBoxMap.get(name);
+                JCheckBox checkBox = checkBoxMap.get(name);
                 if(checkBox != null) checkBox.setSelected(parameter.isEnabled());
             }
 
@@ -185,13 +185,13 @@ public class SettingsPanel implements RenderingListener {
                 if(name.equals(Command.BACKGROUND_COLOR_PARAMETER)) {
                     colorEditor.setColor(parameter.getValue());
                 } else {
-                    JTextField textField = (JTextField)textFieldMap.get(name);
+                    JTextField textField = textFieldMap.get(name);
                     if(textField != null) {
                         String path = parameter.getValue();
                         textField.setText(path);
                     }
 
-                    SpinnerSlider spinnerSlider = (SpinnerSlider)spinnerSliderMap.get(name);
+                    SpinnerSlider spinnerSlider = spinnerSliderMap.get(name);
                     if(spinnerSlider != null) {
                         spinnerSlider.setValue(parameter.getValue());
                     }
@@ -431,7 +431,7 @@ public class SettingsPanel implements RenderingListener {
     }
 
     private void setFileSizeText(final String name, String filePath) {
-        JLabel label = (JLabel)fileSizeLabelMap.get(name);
+        JLabel label = fileSizeLabelMap.get(name);
 
         if(label != null) {
             File file = FileUtilities.getFile(filePath);
@@ -468,7 +468,7 @@ public class SettingsPanel implements RenderingListener {
     }
 
     private JTextField getTextField(String key) {
-        return (JTextField)textFieldMap.get(key);
+        return textFieldMap.get(key);
     }
 
     private SpinnerNumberModel initSpinnerModel(boolean useWholeNumbers, XPathTool xpath, String defaultValue) throws XPathExpressionException {

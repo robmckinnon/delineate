@@ -65,7 +65,7 @@ public class SvgViewerPanel {
     private final JPopupMenu popupMenu = new JPopupMenu();
     private SvgOptimizer svgOptimizer;
 
-    private List renderingListenerList = new ArrayList();
+    private List<RenderingListener> renderingListenerList = new ArrayList<RenderingListener>();
     private JScrollBar horizontalScrollBar;
     private JScrollBar verticalScrollBar;
     private JPanel viewerPanel;
@@ -176,8 +176,8 @@ public class SvgViewerPanel {
         File file = FileUtilities.getFile(uri);
         getSvgOptimizer().optimize(file, getSvgDocument());
 
-        for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
-            RenderingListener renderingListener = (RenderingListener)iterator.next();
+        for(Iterator<RenderingListener> iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+            RenderingListener renderingListener = iterator.next();
             renderingListener.setColors(getSvgOptimizer().getColors());
         }
 
@@ -197,8 +197,8 @@ public class SvgViewerPanel {
 
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                for(Iterator iterator = renderingListenerList.iterator(); iterator.hasNext();) {
-                    RenderingListener renderingListener = (RenderingListener)iterator.next();
+                for(Iterator<RenderingListener> iterator = renderingListenerList.iterator(); iterator.hasNext();) {
+                    RenderingListener renderingListener = iterator.next();
                     renderingListener.renderingCompleted();
                 }
             }

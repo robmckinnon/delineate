@@ -65,6 +65,7 @@ public class SaveSettingsPanel {
         return panel;
     }
 
+    @SuppressWarnings("unchecked")
     private void saveSettings() {
         String initialName = (String)loadSettingsCombo.getSelectedItem();
 
@@ -144,6 +145,7 @@ public class SaveSettingsPanel {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private JComboBox initLoadSettingsCombo() {
         savedSettings = SettingUtilities.loadProperties(getSettingsFileName(), panel);
         savedSettings.setProperty(DEFAULT_SETTING_NAME, command.getCommand());

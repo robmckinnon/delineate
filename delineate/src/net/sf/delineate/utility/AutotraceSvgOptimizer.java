@@ -49,10 +49,10 @@ import java.util.ArrayList;
 public class AutotraceSvgOptimizer extends SvgOptimizer {
 
     private boolean centerlineEnabled;
-    private Map colorToStyleMap = new HashMap();
-    private Map colorToPathsMap = new HashMap();
-    private List colorList = new ArrayList();
-    private Set colorSet = new HashSet();
+    private Map<String, String> colorToStyleMap = new HashMap<String, String>();
+    private Map<String, List<String>> colorToPathsMap = new HashMap<String, List<String>>();
+    private List<String> colorList = new ArrayList<String>();
+    private Set<Color> colorSet = new HashSet<Color>();
     private Color[] colors;
 
     public Color[] getColors() {
@@ -91,12 +91,12 @@ public class AutotraceSvgOptimizer extends SvgOptimizer {
             SVGSVGElement rootElement = svgDocument.getRootElement();
             PrintWriter w = new PrintWriter(new BufferedWriter(new FileWriter(file.getPath())));
 
-            Map styleToColorMap = new HashMap();
-            List styleList = new LinkedList();
+            Map<String, String> styleToColorMap = new HashMap<String, String>();
+            List<String> styleList = new LinkedList<String>();
 
             if(extractStyles()) {
-                styleToColorMap = new HashMap();
-                styleList = new LinkedList();
+                styleToColorMap = new HashMap<String, String>();
+                styleList = new LinkedList<String>();
             }
 
             writeDocumentStart(w, rootElement);
@@ -152,7 +152,7 @@ public class AutotraceSvgOptimizer extends SvgOptimizer {
         w.println("</defs>");
     }
 
-    private int writePaths(SVGSVGElement rootElement, List styleList, Map styleToColorMap, PrintWriter w) {
+    private int writePaths(SVGSVGElement rootElement, List<String> styleList, Map<String, String> styleToColorMap, PrintWriter w) {
         NodeList childNodes = rootElement.getChildNodes();
         int pathCount = 0;
         int styleCount = 0;
@@ -228,11 +228,11 @@ public class AutotraceSvgOptimizer extends SvgOptimizer {
                     w.print(pathText);
                     w.println("\"/>");
                 } else {
-                    List list;
+                    List<String> list;
                     if(colorToPathsMap.containsKey(colorText)) {
-                        list = (List)colorToPathsMap.get(colorText);
+                        list = (List<String>)colorToPathsMap.get(colorText);
                     } else {
-                        list = new ArrayList();
+                        list = new ArrayList<String>();
                         colorList.add(colorText);
                         colorToPathsMap.put(colorText, list);
                     }

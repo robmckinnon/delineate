@@ -50,7 +50,7 @@ public class DelineateApplication {
     public static final String CONVERT_IMAGE_ACTION = "Convert";
     private static final JFrame frame = new JFrame("Delineate - raster to SVG converter");
     private final SvgViewerController svgViewerController;
-    private List convertPanelList = new ArrayList(5);
+    private List<JPanel> convertPanelList = new ArrayList<JPanel>(5);
 
     public DelineateApplication(String autotraceParameterFile, String potraceParameterFile) throws Exception {
         GuiUtilities.setFrame(frame);
@@ -71,7 +71,7 @@ public class DelineateApplication {
         ImageIcon image = new ImageIcon("img/delineate-icon.png");
         frame.setIconImage(image.getImage());
         frame.setBounds(130, 0, 800, 740);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         frame.getGlassPane().addMouseListener(new MouseAdapter() {});
         frame.getGlassPane().addMouseMotionListener(new MouseMotionAdapter() {});

@@ -33,13 +33,10 @@ public class ColorUtilities {
 
     private static final int THRESHOLD = 3 * Integer.parseInt("66", 16) + 1;
 
-    private static Map hexToColorMap = new HashMap(301);
+    private static Map<String, Color> hexToColorMap = new HashMap<String, Color>(301);
 
-    private static final Comparator comparator = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            Color color = (Color)o1;
-            Color otherColor = (Color)o2;
-
+    private static final Comparator<Color> comparator = new Comparator<Color>() {
+        public int compare(Color color, Color otherColor) {
             return color.getRGB() - otherColor.getRGB();
         }
     };
@@ -50,7 +47,7 @@ public class ColorUtilities {
         if(hexColor == null) {
             color = null;
         } else if(hexToColorMap.containsKey(hexColor)) {
-            color = (Color)hexToColorMap.get(hexColor);
+            color = hexToColorMap.get(hexColor);
         } else {
             int red = Integer.parseInt(hexColor.substring(0, 2), 16);
             int green = Integer.parseInt(hexColor.substring(2, 4), 16);
