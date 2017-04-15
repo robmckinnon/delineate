@@ -130,7 +130,7 @@ public class ColorEditor {
 
     public void chooseColor() {
         colorPanel.setColors(colors);
-        colorDialog.show();
+        colorDialog.setVisible(true);
 
         Color color = colorPanel.getColorSelectionModel().getSelectedColor();
         if(color != null) {

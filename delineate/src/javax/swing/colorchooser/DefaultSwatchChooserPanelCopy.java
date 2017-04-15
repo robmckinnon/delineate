@@ -216,7 +216,7 @@ class SwatchPanelCopy extends JPanel {
         this.colors = colors;
     }
 
-    public boolean isFocusTraversable() {
+    public boolean isFocusable() {
         return false;
     }
 
