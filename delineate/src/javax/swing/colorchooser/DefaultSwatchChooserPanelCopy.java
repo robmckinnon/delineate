@@ -69,8 +69,8 @@ public class DefaultSwatchChooserPanelCopy extends AbstractColorChooserPanel {
         return KeyEvent.VK_P;
     }
 
-    static int getInt(Object key, int defaultValue) {
-        Object value = UIManager.get(key);
+    int getInt(Object key, int defaultValue) {
+        Object value = UIManager.get(key, getLocale());
 
         if (value instanceof Integer) {
             return ((Integer)value).intValue();
@@ -83,30 +83,6 @@ public class DefaultSwatchChooserPanelCopy extends AbstractColorChooserPanel {
         return defaultValue;
     }
 
-    /**
-     * Provides a hint to the look and feel as to the index of the character in
-     * <code>getDisplayName</code> that should be visually identified as the
-     * mnemonic. The look and feel should only use this if
-     * <code>getMnemonic</code> returns a value > 0.
-     * <p>
-     * The return value here is a hint, it is ultimately up to the look
-     * and feel to honor the return value in some meaningful way. For example,
-     * a look and feel may wish to render each
-     * <code>AbstractColorChooserPanel</code> in a <code>JTabbedPane</code>,
-     * and further use this return value to underline a character in
-     * the <code>getDisplayName</code>.
-     * <p>
-     * This implementation looks up the value from the default
-     * <code>ColorChooser.rgbDisplayedMnemonicIndex</code>, or if it
-     * isn't available (or not an <code>Integer</code>) returns -1.
-     * The lookup for the default is done through the <code>UIManager</code>:
-     * <code>UIManager.get("ColorChooser.swatchesDisplayedMnemonicIndex");</code>.
-     *
-     * @return Character index to render mnemonic for; -1 to provide no
-     *                   visual identifier for this panel.
-     * @see #getMnemonic
-     * @since 1.4
-     */
     public int getDisplayedMnemonicIndex() {
         return getInt("ColorChooser.swatchesDisplayedMnemonicIndex", -1);
     }
