@@ -1,3 +1,4 @@
+.DS_Store
 build/
 delineate/.idea/
 delineate/delineate.iml
@@ -8,3 +9,4 @@ delineate/settings/settings-autotrace.prop
 delineate/settings/settings-potrace.prop
 delineate/settings/settings.prop
 temp/
+delineate/batik

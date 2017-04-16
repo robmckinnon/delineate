@@ -37,7 +37,7 @@
   ------------
 
   The home page for the Apache Batik project can be found in the Apache XML 
-  Project web site (http://xml.apache.org/batik/). There you also find 
+  Project web site (http://xmlgraphics.apache.org/batik/). There you also find 
   information on how to download the latest release as well as all the other 
   information you might need regarding this project.
 
@@ -45,31 +45,33 @@
   Requirements
   ------------
 
-   o  A Java 1.3 or later compatible virtual machine for your operating system.
+   o  A Java 1.6 or later compatible virtual machine for your operating system.
 
   Optional Libraries
   ------------------
 
   By default, Batik includes a scripting engine for ECMAScript. It is possible
-  to add support for additional scripting languages (Python and TCL)
+  to add support for additional scripting languages (Python and TCL).
   
-  See : http://xml.apache.org/batik/install.html#optionalComponents for details.
+  See http://xmlgraphics.apache.org/batik/install.html#optionalComponents for
+  details.
  
   Installation Instructions and Documentation
   -------------------------------------------
 
-  Read the Install page at http://xml.apache.org/batik for the installation instructions.
+  Read the Install page at http://xmlgraphics.apache.org/batik/install.html
+  for the installation instructions.
 
   Look for the most updated documentation on the Apache Batik web site under
-  the Apache XML Project (http://xml.apache.org/batik/).
+  the Apache XML Graphics Project (http://xmlgraphics.apache.org/batik/).
 
 
   Licensing and legal issues
   --------------------------
 
-  For legal and licensing issues, please read the LICENSE file.
+  For legal and licensing issues, please read the LICENSE and NOTICE files.
 
   Thanks for using Apache Batik.
 
-                                           The Apache XML Project
-                                           http://xml.apache.org/
+                                           The Apache XML Graphics Project
+                                           http://xmlgraphics.apache.org/

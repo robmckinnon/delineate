@@ -19,13 +19,13 @@
  */
 package net.sf.delineate.utility;
 
+import org.apache.batik.util.SVGConstants;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGPathElement;
 import org.w3c.dom.svg.SVGSVGElement;
 import org.w3c.dom.svg.SVGDocument;
-import org.apache.batik.dom.svg.SVGDOMImplementation;
 
 import java.awt.Color;
 import java.io.BufferedWriter;
@@ -74,7 +74,7 @@ public class AutotraceSvgOptimizer extends SvgOptimizer {
     public void addBackground(SVGDocument document) {
         if(background != null) {
             SVGSVGElement root = document.getRootElement();
-            Element rectangle = document.createElementNS(SVGDOMImplementation.SVG_NAMESPACE_URI, "rect");
+            Element rectangle = document.createElementNS(SVGConstants.SVG_NAMESPACE_URI, "rect");
             rectangle.setAttributeNS(null, "width", root.getWidth().getBaseVal().getValueAsString());
             rectangle.setAttributeNS(null, "height", root.getHeight().getBaseVal().getValueAsString());
             rectangle.setAttributeNS(null, "fill", '#' + background);

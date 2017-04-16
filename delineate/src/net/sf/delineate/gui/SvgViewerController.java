@@ -141,11 +141,13 @@ public class SvgViewerController {
 
     private void addSpecificAction(String name, String actionKey, int key, int modifiers, SvgViewerPanel viewer) {
         KeyStroke keyStroke = KeyStroke.getKeyStroke(key, modifiers);
-        panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, actionKey + modifiers);
+        panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).
+                put(keyStroke, actionKey + modifiers);
 
         Action action = viewer.getAction(actionKey);
         action.putValue(Action.NAME, name);
-        panel.getActionMap().put(actionKey + modifiers, action);
+        panel.getActionMap().
+                put(actionKey + modifiers, action);
 
         viewer.addMenuItem(action, keyStroke);
     }

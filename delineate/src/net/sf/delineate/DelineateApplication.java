@@ -35,11 +35,17 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.batik.util.SVGConstants;
 import org.xml.sax.SAXException;
 
 /**
@@ -269,6 +275,7 @@ public class DelineateApplication {
                         svgOptimizer.setBackgroundColor(settingsPanel.getBackgroundColor());
                         svgOptimizer.setCenterlineEnabled(settingsPanel.getCenterlineEnabled());
 
+                        fix_svg_namespace(outputFile);
                         svgViewerController.load(FileUtilities.getUri(outputFile));
                     } catch(Exception e) {
                         e.printStackTrace();
@@ -283,6 +290,15 @@ public class DelineateApplication {
             GuiUtilities.showMessage("Input file does not exist.", "Invalid input file");
             settingsPanel.selectInputTextField();
         }
+    }
+
+    private void fix_svg_namespace(String outputFile) throws IOException {
+        Path path = Paths.get(outputFile);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String content = new String(Files.readAllBytes(path), charset);
+        content = content.replaceAll("<svg width", "<svg xmlns=\"" + SVGConstants.SVG_NAMESPACE_URI + "\" width");
+        Files.write(path, content.getBytes(charset));
     }
 
     private void enableGuiInEventThread() {
