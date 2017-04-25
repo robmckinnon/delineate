@@ -21,6 +21,7 @@ package net.sf.delineate.gui;
 
 import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.SvgOptimizer;
+import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.swing.gvt.GVTTreeRendererAdapter;
 import org.apache.batik.swing.gvt.GVTTreeRendererEvent;
 import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
@@ -83,6 +84,18 @@ public class SvgViewerPanel {
         viewerPanel = createViewerPanel();
     }
 
+    public void hideCanvas() {
+        svgCanvas.setVisible(false);
+    }
+
+    public void showCanvas() {
+        svgCanvas.setVisible(true);
+    }
+
+    public boolean isVisible() {
+        return svgCanvas.isVisible();
+    }
+
     public JPanel getViewerPanel() {
         return viewerPanel;
     }
@@ -137,7 +150,6 @@ public class SvgViewerPanel {
 
                     if(optimize) {
                         optimize();
-
                         if(getSvgOptimizer().groupByColor()) {
                             svgCanvas.stopProcessing();
                             EventQueue.invokeLater(new Runnable() {
@@ -167,7 +179,6 @@ public class SvgViewerPanel {
                 final File file = FileUtilities.getFile(uri);
                 finishConversion(file, resultText);
             }
-
         });
 
     }
@@ -302,6 +313,10 @@ public class SvgViewerPanel {
 
     public void addRenderingListener(RenderingListener listener) {
         renderingListenerList.add(listener);
+    }
+
+    public void removeRenderingListener(RenderingListener listener) {
+        renderingListenerList.remove(listener);
     }
 
     public void setOptimize(boolean optimize) {

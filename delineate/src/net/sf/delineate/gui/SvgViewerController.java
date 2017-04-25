@@ -36,6 +36,7 @@ import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Event;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
@@ -56,6 +57,7 @@ public class SvgViewerController {
 
     private SvgViewerPanel svgViewerB;
     private SvgViewerPanel svgViewerA;
+    private ZoomState zoomState = new ZoomState();
 
     private JPanel panel = new JPanel(new BorderLayout());
 
@@ -129,8 +131,8 @@ public class SvgViewerController {
         if(actionMap.get(actionMapKey) == null) {
             Action actionA = svgViewerA.getAction(actionKey);
             Action actionB = svgViewerB.getAction(actionKey);
-            SvgViewAction action = new SvgViewAction(name, actionA, actionB);
-            actionMap.put(actionKey + key, action);
+            SvgViewAction action = new SvgViewAction(name, actionA, actionB, zoomState);
+            actionMap.put(actionMapKey, action);
 
             if(addToMenu) {
                 svgViewerA.addMenuItem(action, keyStroke);
@@ -155,16 +157,26 @@ public class SvgViewerController {
     private class SvgViewAction extends AbstractAction {
         private Action actionA;
         private Action actionB;
+        private ZoomState zoomState;
 
-        public SvgViewAction(String name, Action actionA, Action actionB) {
+        public SvgViewAction(String name, Action actionA, Action actionB, ZoomState zoomState) {
             super(name);
             this.actionA = actionA;
             this.actionB = actionB;
+            this.zoomState = zoomState;
         }
 
         public void actionPerformed(ActionEvent e) {
             actionA.actionPerformed(null);
             actionB.actionPerformed(null);
+            if (e != null) {
+                String action = actionA.getClass().getSimpleName();
+                if (action.equals("ZoomOutAction")) {
+                    zoomState.zoomOut();
+                } else if (action.equals("ZoomInAction")) {
+                    zoomState.zoomIn();
+                }
+            }
         }
     }
 
@@ -197,13 +209,53 @@ public class SvgViewerController {
             svgViewerB.setPathCount(svgViewerA.getPathCount());
             final SVGDocument svgDocument = (SVGDocument)svgViewerA.getSvgDocument().cloneNode(true);
 
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    String uri = FileUtilities.getUri(previousFile.getPath());
-                    svgViewerB.setSvgDocument(uri, svgDocument);
-                }
-            });
+            String uri = FileUtilities.getUri(previousFile.getPath());
+            if(zoomState.isZoomed()) svgViewerB.hideCanvas();
+            svgViewerB.setSvgDocument(uri, svgDocument);
+            zoomIfRequired(svgViewerB);
         }
+    }
+
+    private void zoomIfRequired(final SvgViewerPanel viewerPanel) {
+        if (zoomState.isZoomed()) {
+            performZoom(zoomActionKey(), viewerPanel, zoomState.getZoom());
+        }
+    }
+
+    private String zoomActionKey() {
+        if (zoomState.zoomedOut()) return JSVGCanvas.ZOOM_OUT_ACTION;
+        else if (zoomState.zoomedIn()) return JSVGCanvas.ZOOM_IN_ACTION;
+        else return null;
+    }
+
+    private void performZoom(final String zoomActionKey, final SvgViewerPanel viewerPanel, final int zoom) {
+        viewerPanel.addRenderingListener(new RenderingListener() {
+            public void renderingCompleted() {
+                final RenderingListener listener = this;
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                        viewerPanel.removeRenderingListener(listener);
+                        for (int i = 0; i < Math.abs(zoom); i++)
+                            viewerPanel.getAction(zoomActionKey).actionPerformed(null);
+                    }
+                });
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                EventQueue.invokeLater(new Runnable() { public void run() {
+                    if(!viewerPanel.isVisible()) viewerPanel.showCanvas();
+                }});
+                }});
+                }});
+                }});
+                }});
+                }});
+            }
+
+            public void setColors(Color[] colors) {}
+        });
     }
 
     public void load(final String uri) {
@@ -212,7 +264,9 @@ public class SvgViewerController {
         svgViewerA.setOptimize(true);
         EventQueue.invokeLater(new Runnable() {
             public void run() {
+                if(zoomState.isZoomed()) svgViewerA.hideCanvas();
                 svgViewerA.setURI(uri);
+                zoomIfRequired(svgViewerA);
             }
         });
     }
