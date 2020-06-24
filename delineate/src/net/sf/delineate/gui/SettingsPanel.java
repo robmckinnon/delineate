@@ -25,6 +25,7 @@ import net.sf.delineate.utility.FileUtilities;
 import net.sf.delineate.utility.GuiUtilities;
 import net.sf.delineate.utility.XPathTool;
 import net.sf.delineate.utility.SettingUtilities;
+import net.sf.delineate.utility.SpringUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -39,7 +40,6 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
-import javax.swing.SpringUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.xpath.XPathExpressionException;

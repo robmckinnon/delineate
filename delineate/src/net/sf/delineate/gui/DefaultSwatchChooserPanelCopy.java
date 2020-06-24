@@ -1,14 +1,8 @@
-/*
- * @(#)DefaultSwatchChooserPanelCopy.java	1.24 03/01/23
- *
- * Copyright 2003 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
-
-package javax.swing.colorchooser;
+package net.sf.delineate.gui;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Serializable;

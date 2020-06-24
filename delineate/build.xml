@@ -52,15 +52,17 @@
     <jar jarfile="${temp}/${deploy}/${name}.jar" basedir="${build}" includes="**">
       <manifest>
         <attribute name="Main-Class" value="${main-class}"/>
-        <attribute name="Class-Path" value="./lib/batik-swing.jar
+        <attribute name="Class-Path" value="./lib/org.w3c.dom.svg-1.1.0.jar
+ ./lib/batik-swing.jar
  ./lib/batik-gvt.jar
- ./lib/batik-bridge.jar
  ./lib/batik-ext.jar
+ ./lib/batik-bridge.jar
  ./lib/batik-util.jar
  ./lib/batik-svg-dom.jar
  ./lib/batik-dom.jar
  ./lib/batik-css.jar
  ./lib/batik-gui-util.jar
+ ./lib/batik-anim.jar
  ./lib/xerces_2_5_0.jar
  ./lib/xml-apis.jar
  ./lib/batik-xml.jar

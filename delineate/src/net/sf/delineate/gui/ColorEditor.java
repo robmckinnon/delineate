@@ -20,6 +20,7 @@
 package net.sf.delineate.gui;
 
 import net.sf.delineate.command.Command;
+import net.sf.delineate.gui.DefaultSwatchChooserPanelCopy;
 import net.sf.delineate.utility.ColorUtilities;
 
 import javax.swing.JColorChooser;
@@ -29,7 +30,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JComponent;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
-import javax.swing.colorchooser.DefaultSwatchChooserPanelCopy;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;

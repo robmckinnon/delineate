@@ -1,11 +1,4 @@
-/*
- * @(#)CenterLayout.java	1.9 03/01/23
- *
- * Copyright 2003 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
-
-package javax.swing.colorchooser;
+package net.sf.delineate.gui;
 
 import java.awt.*;
 import java.io.*;

@@ -1,4 +1,4 @@
-package javax.swing;
+package net.sf.delineate.utility;
 
 import javax.swing.*;
 import javax.swing.SpringLayout;
